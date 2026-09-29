@@ -61,6 +61,24 @@ tests:
     build: "parakeet"
     malformed: true
 
+  - name: "a build written as a number is refused"
+    table: '{"build": 4, "version": "v1", "words": {}}'
+    build: "parakeet"
+    malformed: true
+
+  - name: "an after written as a number is refused"
+    table: '{"build": "parakeet", "version": "v1", "words": {"in": [{"heard": "and", "after": 7}]}}'
+    build: "parakeet"
+    malformed: true
+
+  - name: "a misspelt after is a field nobody reads, so the allowance holds after any word"
+    table: '{"build": "parakeet", "version": "v1", "words": {"in": [{"heard": "and", "afer": "each"}]}}'
+    build: "parakeet"
+    empty: false
+    queries:
+      - {heard: "and", written: "in", after: "each", allowed: true}
+      - {heard: "and", written: "in", after: "delights", allowed: true}
+
   - name: "a table in UTF-16 is refused as not UTF-8"
     table: '{"build": "parakeet", "version": "v1", "words": {}}'
     encoding: "utf-16le-bom"

@@ -224,6 +224,38 @@ decode:
         duration: 1
         words: []
 
+  - name: "an alignment without its piece is refused"
+    json: '{"version": "v1", "alignment": {"duration": 1, "words": []}}'
+    malformed: true
+
+  - name: "an alignment without its duration is refused"
+    json: '{"version": "v1", "alignment": {"piece": "1", "words": []}}'
+    malformed: true
+
+  - name: "a word without its line is refused"
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": [{"text": "a", "start": 0, "end": 0.1}]}}'
+    malformed: true
+
+  - name: "a word without its text is refused"
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": [{"line": 0, "start": 0, "end": 0.1}]}}'
+    malformed: true
+
+  - name: "a word without its start is refused"
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "end": 0.1}]}}'
+    malformed: true
+
+  - name: "a word without its end is refused"
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": 0}]}}'
+    malformed: true
+
+  - name: "a version written as a number is refused"
+    json: '{"version": 1, "alignment": {"piece": "1", "duration": 1, "words": []}}'
+    malformed: true
+
+  - name: "a recording written as a number is refused"
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "recording": 18, "words": []}}'
+    malformed: true
+
   - name: "a bare alignment, which no server publishes, is refused"
     json: '{"piece": "1", "duration": 1, "words": []}'
     malformed: true
