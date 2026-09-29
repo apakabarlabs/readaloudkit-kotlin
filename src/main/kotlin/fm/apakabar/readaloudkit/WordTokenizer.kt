@@ -46,8 +46,9 @@ class WordTokenizer(
 
     /** Splits one line while preserving every original character and space. */
     fun segments(line: String): List<LineSegment> {
-        val ranges = wordRanges(line)
-        if (ranges.isEmpty()) {
+        val characters = Characters(line)
+        val words = wordCharacters(characters)
+        if (words.isEmpty()) {
             val wordless =
                 LineSegment(
                     wordIndex = null,
@@ -59,20 +60,15 @@ class WordTokenizer(
             return if (line.isEmpty()) emptyList() else listOf(wordless)
         }
 
-        val bounds = characterBounds(line)
+        val offset = characters.bounds
         val openings =
-            ranges.mapIndexed { index, range ->
-                val gapStart = if (index == 0) 0 else ranges[index - 1].last + 1
-                openingMarkStart(
-                    line = line,
-                    bounds = bounds,
-                    gap = gapStart until range.first,
-                    isFirstWord = index == 0,
-                )
+            words.mapIndexed { index, word ->
+                val gapStart = if (index == 0) 0 else words[index - 1].last + 1
+                openingMarkStart(characters, gapStart = gapStart, gapEnd = word.first, isFirstWord = index == 0)
             }
 
         val segments = mutableListOf<LineSegment>()
-        val runIn = line.substring(0, openings[0])
+        val runIn = line.substring(0, offset[openings[0]])
         if (runIn.isNotEmpty()) {
             segments.add(
                 LineSegment(
@@ -84,21 +80,18 @@ class WordTokenizer(
                 ),
             )
         }
-        for ((index, range) in ranges.withIndex()) {
-            val untilNextWordsMarks = if (index + 1 < ranges.size) openings[index + 1] else line.length
-            val afterStart = range.last + 1
-            val closingEnd =
-                bounds
-                    .filter { it in afterStart..untilNextWordsMarks }
-                    .firstOrNull { it == untilNextWordsMarks || isWhitespace(characterAt(line, bounds, it)) }
-                    ?: untilNextWordsMarks
+        for ((index, word) in words.withIndex()) {
+            val untilNextWordsMarks = if (index + 1 < words.size) openings[index + 1] else characters.count
+            val afterWord = word.last + 1
+            var closingEnd = afterWord
+            while (closingEnd < untilNextWordsMarks && !characters.isWhitespace(closingEnd)) closingEnd++
             segments.add(
                 LineSegment(
                     wordIndex = index,
-                    openingMarks = line.substring(openings[index], range.first),
-                    word = line.substring(range),
-                    closingMarks = line.substring(afterStart, closingEnd),
-                    space = line.substring(closingEnd, untilNextWordsMarks),
+                    openingMarks = line.substring(offset[openings[index]], offset[word.first]),
+                    word = line.substring(offset[word.first], offset[afterWord]),
+                    closingMarks = line.substring(offset[afterWord], offset[closingEnd]),
+                    space = line.substring(offset[closingEnd], offset[untilNextWordsMarks]),
                 ),
             )
         }
@@ -106,60 +99,56 @@ class WordTokenizer(
     }
 
     private fun openingMarkStart(
-        line: String,
-        bounds: IntArray,
-        gap: IntRange,
+        characters: Characters,
+        gapStart: Int,
+        gapEnd: Int,
         isFirstWord: Boolean,
     ): Int {
-        val lastSpace =
-            bounds.indices
-                .lastOrNull { index -> bounds[index] in gap && isWhitespace(characterAt(line, bounds, bounds[index])) }
-        if (lastSpace == null) {
-            val marksStandWithTheWordBefore = !isFirstWord
-            return if (marksStandWithTheWordBefore) gap.last + 1 else gap.first
+        for (index in gapEnd - 1 downTo gapStart) {
+            if (characters.isWhitespace(index)) return index + 1
         }
-        return bounds[lastSpace + 1]
+        val marksStandWithTheWordBefore = !isFirstWord
+        return if (marksStandWithTheWordBefore) gapEnd else gapStart
     }
 
     /** Returns the UTF-16 offsets of words in one line. */
     fun wordRanges(line: String): List<IntRange> {
-        val bounds = characterBounds(line)
-        val ranges = mutableListOf<IntRange>()
-        var start: Int? = null
+        val characters = Characters(line)
+        val offset = characters.bounds
+        return wordCharacters(characters).map { offset[it.first] until offset[it.last + 1] }
+    }
 
-        for (index in 0 until bounds.size - 1) {
-            val offset = bounds[index]
-            val began = start
-            if (isWordCharacter(line.substring(offset, bounds[index + 1]), hasStarted = began != null)) {
-                if (began == null) start = offset
-            } else if (began != null) {
-                ranges.add(began until offset)
-                start = null
+    private fun wordCharacters(characters: Characters): List<IntRange> {
+        val words = mutableListOf<IntRange>()
+        var start = -1
+        for (index in 0 until characters.count) {
+            if (isWordCharacter(characters, index, hasStarted = start >= 0)) {
+                if (start < 0) start = index
+            } else if (start >= 0) {
+                words.add(trimInteriorMarks(characters, start, index))
+                start = -1
             }
         }
-        start?.let { ranges.add(it until line.length) }
-        return ranges.map { trimInteriorMarks(line, bounds, it) }
+        if (start >= 0) words.add(trimInteriorMarks(characters, start, characters.count))
+        return words
     }
 
     private fun isWordCharacter(
-        character: String,
+        characters: Characters,
+        index: Int,
         hasStarted: Boolean,
     ): Boolean {
-        if (isLetter(character)) return true
-        return hasStarted && character.codePoints().allMatch { it in interiorMarks }
+        if (characters.isLetter(index)) return true
+        return hasStarted && characters.isAll(index, interiorMarks)
     }
 
     private fun trimInteriorMarks(
-        line: String,
-        bounds: IntArray,
-        range: IntRange,
+        characters: Characters,
+        start: Int,
+        end: Int,
     ): IntRange {
-        var end = bounds.indexOf(range.last + 1)
-        while (bounds[end] > range.first) {
-            val previous = end - 1
-            if (isLetter(characterAt(line, bounds, bounds[previous]))) break
-            end = previous
-        }
-        return range.first until bounds[end]
+        var last = end
+        while (last > start && !characters.isLetter(last - 1)) last--
+        return start until last
     }
 }
