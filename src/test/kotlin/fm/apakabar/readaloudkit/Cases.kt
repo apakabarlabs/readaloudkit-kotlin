@@ -35,7 +35,7 @@ object Cases {
         return Yaml.default.decodeFromString(serializer, bytes(name).decodeToString())
     }
 
-    fun tokenizer(interiorMarks: String?): WordTokenizer = interiorMarks?.let { WordTokenizer(it) } ?: WordTokenizer.latinScript
+    fun tokenizer(interiorMarks: String): WordTokenizer = WordTokenizer(interiorMarks)
 
     fun quirks(allowances: Map<String, List<YamlNode>>?): RecognizerQuirks =
         allowances?.let { table -> RecognizerQuirks(table.mapValues { (written, entries) -> entries.map { allowance(it, written) } }) }

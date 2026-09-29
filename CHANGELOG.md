@@ -44,4 +44,5 @@
   `NarrationTimeline.word(at, ofLines, timings)`.
 - The tests read the cases of readaloudkit-swift, copied byte for byte into
   `src/test/resources/` by `make sync-yaml`, and a test compares each copy with the
-  file on that repository's `main`.
+  file on that repository's `main`. Every case that splits text names the
+  `interior_marks` of its language, and a case without them cannot be read.

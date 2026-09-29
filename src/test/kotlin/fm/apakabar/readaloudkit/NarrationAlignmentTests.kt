@@ -84,6 +84,7 @@ data class WordMismatch(
 data class TimingsCase(
     val name: String,
     val lines: List<String>,
+    @SerialName("interior_marks") val interiorMarks: String,
     val words: List<NarrationAlignment.Word>,
     val timings: List<ExpectedTiming>? = null,
     @SerialName("word_count_mismatch") val wordCountMismatch: CountMismatch? = null,
@@ -126,15 +127,16 @@ class NarrationAlignmentTests {
         Cases.tests(AlignmentCases.all.timings, { it.name }) { case ->
             val alignment = NarrationAlignment(piece = "1", duration = 10.0, words = case.words)
             val passage = Passage(lines = case.lines)
+            val tokenizer = Cases.tokenizer(case.interiorMarks)
             val refusal = case.refusal
             if (refusal != null) {
                 assertEquals(
                     refusal,
-                    assertFailsWith<NarrationAlignment.AlignmentError> { alignment.timings(passage, WordTokenizer.latinScript) },
+                    assertFailsWith<NarrationAlignment.AlignmentError> { alignment.timings(passage, tokenizer) },
                 )
                 return@tests
             }
-            val timings = alignment.timings(passage, WordTokenizer.latinScript)
+            val timings = alignment.timings(passage, tokenizer)
             assertEquals(
                 checkNotNull(case.timings) { "a fitting case pins its timings" },
                 timings.map { ExpectedTiming(text = it.word.text, line = it.word.lineIndex, start = it.start, end = it.end) },

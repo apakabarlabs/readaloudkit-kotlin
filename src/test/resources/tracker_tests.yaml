@@ -1,8 +1,9 @@
 # What a SpokenLineTracker makes of one transcript read against printed lines.
 #
-# A case gives the printed `lines`, optionally the `quirks` of the recogniser (written
-# word to heard spellings, each a string or a `{heard, after}` pair) and the
-# `interior_marks` of the tokenizer when it is not the Latin-script one.
+# A case gives the printed `lines`, the `interior_marks` a word of their language may
+# hold, which every case names because no language is assumed, and optionally the
+# `quirks` of the recogniser (written word to heard spellings, each a string or a
+# `{heard, after}` pair).
 #
 # Every case pins `line_lengths`. With `heard`, the transcript is checked, and the case
 # pins the whole result: every word's check in `checks`, `complete` and `all_wrong`.
@@ -10,6 +11,7 @@
 tests:
   - name: "a line said whole is complete"
     lines: ["From fairest creatures we desire increase,"]
+    interior_marks: "'’-"
     line_lengths: [6]
     heard: "from fairest creatures we desire increase"
     checks: [correct, correct, correct, correct, correct, correct]
@@ -18,6 +20,7 @@ tests:
 
   - name: "a line half said is a line not said"
     lines: ["From fairest creatures we desire increase,"]
+    interior_marks: "'’-"
     line_lengths: [6]
     heard: "from fairest creatures"
     checks: [correct, correct, correct, wrong, wrong, wrong]
@@ -26,6 +29,7 @@ tests:
 
   - name: "nothing heard yet is no progress and no words to fix"
     lines: ["From fairest creatures we desire increase,"]
+    interior_marks: "'’-"
     line_lengths: [6]
     heard: ""
     checks: [wrong, wrong, wrong, wrong, wrong, wrong]
@@ -34,6 +38,7 @@ tests:
 
   - name: "a reading nobody could make out is all wrong"
     lines: ["From fairest creatures we desire increase,"]
+    interior_marks: "'’-"
     line_lengths: [6]
     heard: "the quick brown fox jumped over"
     checks: [wrong, wrong, wrong, wrong, wrong, wrong]
@@ -42,6 +47,7 @@ tests:
 
   - name: "a reading that went wrong after its first word is not all wrong"
     lines: ["From fairest creatures we desire increase,"]
+    interior_marks: "'’-"
     line_lengths: [6]
     heard: "from the quick brown fox jumped"
     checks: [correct, wrong, wrong, wrong, wrong, wrong]
@@ -50,6 +56,7 @@ tests:
 
   - name: "a short word one letter apart is still put opposite the word it answers"
     lines: ["Th’ expense of spirit in a waste of shame"]
+    interior_marks: "'’-"
     line_lengths: [9]
     heard: "the expense of spirit in a waste of shame"
     checks: [close, correct, correct, correct, correct, correct, correct, correct, correct]
@@ -58,6 +65,7 @@ tests:
 
   - name: "a word spelt differently is a different word, however close it looks"
     lines: ["From fairest creatures we desire increase,"]
+    interior_marks: "'’-"
     line_lengths: [6]
     heard: "from farest creatures we desire increase"
     checks: [correct, close, correct, correct, correct, correct]
@@ -66,6 +74,7 @@ tests:
 
   - name: "a word said with an ending that is not there is wrong, however close it looks"
     lines: ["But as the riper should by time decease,"]
+    interior_marks: "'’-"
     line_lengths: [8]
     heard: "but as the ripers should by time decease"
     checks: [correct, correct, correct, close, correct, correct, correct, correct]
@@ -74,6 +83,7 @@ tests:
 
   - name: "an elision the recogniser spells out in full counts as said"
     lines: ["Will be a tatter’d weed of small worth held:"]
+    interior_marks: "'’-"
     line_lengths: [9]
     heard: "will be a tattered weed of small worth held"
     checks: [correct, correct, correct, correct, correct, correct, correct, correct, correct]
@@ -82,6 +92,7 @@ tests:
 
   - name: "a word patched for this recogniser passes as though it had been heard right"
     lines: ["Will be a tatter’d weed of small worth held:"]
+    interior_marks: "'’-"
     line_lengths: [9]
     quirks: {"tatter’d": ["tattered"]}
     heard: "will be a tattered weed of small worth held"
@@ -91,6 +102,7 @@ tests:
 
   - name: "two written words the recogniser runs into one are patched as the pair they make"
     lines: ["For to thy sensual fault I bring in sense;"]
+    interior_marks: "'’-"
     line_lengths: [9]
     quirks: {"in sense": ["incense"]}
     heard: "for to thy sensual fault I bring incense"
@@ -100,6 +112,7 @@ tests:
 
   - name: "a pair patched for one turn of phrase fires there"
     lines: ["I bring in sense;"]
+    interior_marks: "'’-"
     line_lengths: [4]
     quirks: {"in sense": [{heard: "incense", after: "bring"}]}
     heard: "I bring incense"
@@ -109,6 +122,7 @@ tests:
 
   - name: "a pair patched for one turn of phrase does not fire elsewhere"
     lines: ["I burn in sense;"]
+    interior_marks: "'’-"
     line_lengths: [4]
     quirks: {"in sense": [{heard: "incense", after: "bring"}]}
     heard: "I burn incense"
@@ -118,6 +132,7 @@ tests:
 
   - name: "a patch fires where its own word is expected"
     lines: ["Which, used, lives th’ executor to be."]
+    interior_marks: "'’-"
     line_lengths: [7]
     quirks: {"th’": ["the"]}
     heard: "which used lives the executor to be"
@@ -127,6 +142,7 @@ tests:
 
   - name: "a patch does not disturb a word it was not written for"
     lines: ["And only herald to the gaudy spring,"]
+    interior_marks: "'’-"
     line_lengths: [7]
     quirks: {"th’": ["the"]}
     heard: "and only herald to the gaudy spring"
@@ -136,6 +152,7 @@ tests:
 
   - name: "a dropped word leaves the line unfinished but does not cost the rest"
     lines: ["From fairest creatures we desire increase,"]
+    interior_marks: "'’-"
     line_lengths: [6]
     heard: "from fairest creatures desire increase"
     checks: [correct, correct, correct, wrong, correct, correct]
@@ -144,6 +161,7 @@ tests:
 
   - name: "a false start before the line is skipped rather than held against the reader"
     lines: ["From fairest creatures we desire increase,"]
+    interior_marks: "'’-"
     line_lengths: [6]
     heard: "wait sorry from fairest creatures"
     checks: [correct, correct, correct, wrong, wrong, wrong]
@@ -152,6 +170,7 @@ tests:
 
   - name: "a word said as something else is the only one marked wrong"
     lines: ["From fairest creatures we desire increase,"]
+    interior_marks: "'’-"
     line_lengths: [6]
     heard: "from fairest butterfly we desire increase"
     checks: [correct, correct, wrong, correct, correct, correct]
@@ -160,6 +179,7 @@ tests:
 
   - name: "a mangled opening does not hide the words said correctly after it"
     lines: ["From fairest creatures we desire increase,"]
+    interior_marks: "'’-"
     line_lengths: [6]
     heard: "From Fair Screeches V desire increase."
     checks: [correct, wrong, wrong, wrong, correct, correct]
@@ -168,6 +188,7 @@ tests:
 
   - name: "a hyphenated word heard as two words still counts as said"
     lines: ["Feed’st thy light’s flame with self-substantial fuel,"]
+    interior_marks: "'’-"
     line_lengths: [7]
     heard: "feedst thy lights flame with self substantial fuel"
     checks: [correct, correct, correct, correct, correct, correct, correct]
@@ -176,6 +197,7 @@ tests:
 
   - name: "a patched word heard as two words still counts as said"
     lines: ["And burn the long-liv’d phoenix, in her blood;"]
+    interior_marks: "'’-"
     line_lengths: [8]
     quirks: {"long-liv’d": ["longlived"]}
     heard: "and burn the long lived phoenix in her blood"
@@ -185,6 +207,7 @@ tests:
 
   - name: "two words heard as one still count as said"
     lines: ["And do what ever thou wilt swift-footed Time"]
+    interior_marks: "'’-"
     line_lengths: [8]
     heard: "and do whatever thou wilt swift footed time"
     checks: [correct, correct, correct, correct, correct, correct, correct, correct]
@@ -193,6 +216,7 @@ tests:
 
   - name: "a line not yet attempted waits on its first word"
     lines: ["From fairest creatures we desire increase,"]
+    interior_marks: "'’-"
     line_lengths: [6]
     untried: [expected, ahead, ahead, ahead, ahead, ahead]
 
@@ -211,6 +235,7 @@ tests:
       - "That thereby beauty's rose might never die,"
       - "But as the riper should by time decease,"
       - "His tender heir might bear his memory:"
+    interior_marks: "'’-"
     line_lengths: [6, 7, 8, 7]
     heard: >-
       From fairest creatures we desire increase,
@@ -231,6 +256,7 @@ tests:
       - "That thereby beauty's rose might never die,"
       - "But as the riper should by time decease,"
       - "His tender heir might bear his memory:"
+    interior_marks: "'’-"
     line_lengths: [6, 7, 8, 7]
     heard: "From fairest creatures we desire increase,"
     checks: [
@@ -247,6 +273,7 @@ tests:
       - "That thereby beauty's rose might never die,"
       - "But as the riper should by time decease,"
       - "His tender heir might bear his memory:"
+    interior_marks: "'’-"
     line_lengths: [6, 7, 8, 7]
     heard: >-
       From fairest creatures we desire increase,
@@ -292,6 +319,7 @@ tests:
 
   - name: "word attempts use the passage spelling and include correct words"
     lines: ["Love is not love"]
+    interior_marks: "'’-"
     line_lengths: [4]
     heard: "glove is love"
     checks: [close, correct, wrong, correct]
@@ -305,6 +333,7 @@ tests:
 
   - name: "a line on its own is a piece of one line"
     lines: ["From fairest creatures we desire increase,"]
+    interior_marks: "'’-"
     line_lengths: [6]
     heard: "From fairest creatures we desire increase,"
     checks: [correct, correct, correct, correct, correct, correct]

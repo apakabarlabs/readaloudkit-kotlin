@@ -1,7 +1,9 @@
 # How a printed line is cut into the words a reader says, and into drawable segments.
 #
-# `words` cases list the spelling of every word `wordRanges` finds in `line`, split by
-# the Latin-script tokenizer unless `interior_marks` names the marks a word may hold.
+# Every case names the `interior_marks` a word of its language may hold once it has
+# begun, since no language is assumed: `""` where the language has none.
+#
+# `words` cases list the spelling of every word `wordRanges` finds in `line`.
 #
 # `segments` cases list every segment of `line` in order. A segment without `index` is
 # wordless; `opening`, `word`, `closing` and `space` default to the empty string.
@@ -10,39 +12,48 @@
 words:
   - name: "apostrophes hold elisions together, typeset"
     line: "That thereby beauty’s rose might never die,"
+    interior_marks: "'’-"
     words: ["That", "thereby", "beauty’s", "rose", "might", "never", "die"]
 
   - name: "apostrophes hold elisions together, keyed"
     line: "Feed'st thy light's flame"
+    interior_marks: "'’-"
     words: ["Feed'st", "thy", "light's", "flame"]
 
   - name: "hyphens hold compounds together"
     line: "with self-substantial fuel,"
+    interior_marks: "'’-"
     words: ["with", "self-substantial", "fuel"]
 
   - name: "punctuation between words is dropped"
     line: "Thy self thy foe, to thy sweet self too cruel:"
+    interior_marks: "'’-"
     words: ["Thy", "self", "thy", "foe", "to", "thy", "sweet", "self", "too", "cruel"]
 
   - name: "an opening quotation mark stays outside the word it wraps"
     line: "If thou couldst answer ‘This fair child of mine"
+    interior_marks: "'’-"
     words: ["If", "thou", "couldst", "answer", "This", "fair", "child", "of", "mine"]
 
   - name: "a closing quotation mark stays outside the word it wraps"
     line: "Shall sum my count, and make my old excuse,’"
+    interior_marks: "'’-"
     words: ["Shall", "sum", "my", "count", "and", "make", "my", "old", "excuse"]
 
   - name: "an empty line yields no words"
     line: ""
+    interior_marks: "'’-"
     words: []
 
   - name: "a line with no letters yields no words"
     line: "..."
+    interior_marks: "'’-"
     words: []
 
   - name: "a letter written with a combining mark is one character of its word"
-    line: "café, au lait"
-    words: ["café", "au", "lait"]
+    line: "cafe\u0301, au lait"
+    interior_marks: "'’-"
+    words: ["cafe\u0301", "au", "lait"]
 
   - name: "a language without apostrophe elisions can say so"
     line: "beauty's rose"
@@ -51,51 +62,63 @@ words:
 
   - name: "a zero-width non-joiner inside a Persian word does not split it"
     line: "من نمی‌خواهم"
+    interior_marks: ""
     words: ["من", "نمی‌خواهم"]
 
   - name: "a Bengali conjunct is part of its word"
     line: "ক্ষমা করো"
+    interior_marks: ""
     words: ["ক্ষমা", "করো"]
 
   - name: "a zero-width joiner inside a Bengali word does not split it"
     line: "র‍্যাব এল"
+    interior_marks: ""
     words: ["র‍্যাব", "এল"]
 
   - name: "an emoji skin-tone modifier after a letter stays with that letter"
     line: "ok\U0001F3FDay"
+    interior_marks: "'’-"
     words: ["ok\U0001F3FDay"]
 
   - name: "an emoji with its modifier after a word is not part of the word"
     line: "go\U0001F44D\U0001F3FD on"
+    interior_marks: "'’-"
     words: ["go", "on"]
 
   - name: "a character is a letter by its base, not by a sign prepended to it"
-    line: "؀سال"
-    words: ["؀سال"]
+    line: "\u0600سال"
+    interior_marks: ""
+    words: ["\u0600سال"]
 
   - name: "a letter under a combining mark ends a word as a letter"
-    line: "ab̈, cd"
-    words: ["ab̈", "cd"]
+    line: "ab\u0308, cd"
+    interior_marks: "'’-"
+    words: ["ab\u0308", "cd"]
 
   - name: "a private-use character is not a letter"
     line: "ab\uE000cd"
+    interior_marks: "'’-"
     words: ["ab", "cd"]
 
   - name: "a private-use character beyond the basic plane is not a letter"
     line: "ab\U000F0000cd \U0010FFFD"
+    interior_marks: "'’-"
     words: ["ab", "cd"]
 
   - name: "a private-use character under a combining mark is not a letter"
     line: "ab \uE000\u0301cd"
+    interior_marks: "'’-"
     words: ["ab", "cd"]
 
   - name: "a combining mark with no letter under it is not a letter"
-    line: "̈ab"
+    line: "\u0308ab"
+    interior_marks: "'’-"
     words: ["ab"]
 
 segments:
   - name: "a line splits into pieces that put it back together unchanged"
     line: "Thy self thy foe, to thy sweet self too cruel:"
+    interior_marks: "'’-"
     segments:
       - {index: 0, word: "Thy", space: " "}
       - {index: 1, word: "self", space: " "}
@@ -110,6 +133,7 @@ segments:
 
   - name: "a mark that opens a word goes with that word, not with the one before it"
     line: "she said: ‘go on’"
+    interior_marks: "'’-"
     segments:
       - {index: 0, word: "she", space: " "}
       - {index: 1, word: "said", closing: ":", space: " "}
@@ -118,6 +142,7 @@ segments:
 
   - name: "a line that opens with a quotation mark gives it to its first word"
     line: "‘go on’ she said"
+    interior_marks: "'’-"
     segments:
       - {index: 0, opening: "‘", word: "go", space: " "}
       - {index: 1, word: "on", closing: "’", space: " "}
@@ -126,39 +151,46 @@ segments:
 
   - name: "marks with no space around them stand with the word before"
     line: "here,—there"
+    interior_marks: "'’-"
     segments:
       - {index: 0, word: "here", closing: ",—"}
       - {index: 1, word: "there"}
 
   - name: "a line with no letters is one wordless segment"
     line: "..."
+    interior_marks: "'’-"
     segments:
       - {closing: "..."}
 
   - name: "an empty line has no segments"
     line: ""
+    interior_marks: "'’-"
     segments: []
 
   - name: "an emoji with its modifier closes the word before it"
     line: "go\U0001F44D\U0001F3FD on"
+    interior_marks: "'’-"
     segments:
       - {index: 0, word: "go", closing: "\U0001F44D\U0001F3FD", space: " "}
       - {index: 1, word: "on"}
 
   - name: "a sign prepended to a space is a space by its base"
-    line: "رقم ؀ سال"
+    line: "رقم \u0600 سال"
+    interior_marks: ""
     segments:
-      - {index: 0, word: "رقم", space: " ؀ "}
+      - {index: 0, word: "رقم", space: " \u0600 "}
       - {index: 1, word: "سال"}
 
   - name: "a zero-width non-joiner keeps a Persian word one segment"
     line: "من نمی‌خواهم."
+    interior_marks: ""
     segments:
       - {index: 0, word: "من", space: " "}
       - {index: 1, word: "نمی‌خواهم", closing: "."}
 
   - name: "space before the first word is a wordless segment of its own"
     line: "  go"
+    interior_marks: "'’-"
     segments:
       - {space: "  "}
       - {index: 0, word: "go"}
@@ -166,6 +198,7 @@ segments:
 passage:
   - name: "words carry their line and their order"
     lines: ["From fairest creatures", "we desire increase,"]
+    interior_marks: "'’-"
     words: ["From", "fairest", "creatures", "we", "desire", "increase"]
     line_of_each: [0, 0, 0, 1, 1, 1]
     index_in_line: [0, 1, 2, 0, 1, 2]

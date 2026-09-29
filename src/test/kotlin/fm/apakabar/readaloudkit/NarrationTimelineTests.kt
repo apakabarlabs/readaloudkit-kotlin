@@ -40,6 +40,7 @@ fun assertTimings(
 data class SettleCase(
     val name: String,
     val lines: List<String>,
+    @SerialName("interior_marks") val interiorMarks: String,
     @SerialName("sample_count") val sampleCount: Int,
     val level: Float,
     val loud: List<List<Int>>,
@@ -56,7 +57,7 @@ data class SettleCase(
 
     val marked: List<WordTiming>
         get() =
-            WordTokenizer.latinScript.words(Passage(lines = lines)).zip(marks) { word, mark ->
+            Cases.tokenizer(interiorMarks).words(Passage(lines = lines)).zip(marks) { word, mark ->
                 WordTiming(word = word, start = mark[0], end = mark[1])
             }
 }

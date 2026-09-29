@@ -1,8 +1,9 @@
 # How measured word times are adjusted against a recording.
 #
-# `settle` cases run settledBetweenLines on the words of `lines`, split by the
-# Latin-script tokenizer and timed by `marks`, against `sample_count` silent samples
-# made `level` loud over each `[from, to)` run of `loud`, at `rate` samples a second.
+# `settle` cases run settledBetweenLines on the words of `lines`, split by a tokenizer
+# that keeps the `interior_marks` of their language and timed by `marks`, against
+# `sample_count` silent samples made `level` loud over each `[from, to)` run of `loud`,
+# at `rate` samples a second.
 #
 # `hold` cases run heldToTheNextWord on `spans`, with the default limit unless `limit`
 # is given.
@@ -12,6 +13,7 @@
 settle:
   - name: "a line ending marked inside a sound is carried to where the sound stops"
     lines: ["one two", "three four"]
+    interior_marks: "'’-"
     sample_count: 1000
     level: 0.5
     loud: [[0, 400], [500, 700]]
@@ -21,6 +23,7 @@ settle:
 
   - name: "a line ending marked in the quiet is left where it is"
     lines: ["one two", "three four"]
+    interior_marks: "'’-"
     sample_count: 1000
     level: 0.5
     loud: [[0, 400], [500, 700]]
@@ -30,6 +33,7 @@ settle:
 
   - name: "a mark inside a line is left alone however loud the recording is there"
     lines: ["one two", "three four"]
+    interior_marks: "'’-"
     sample_count: 1000
     level: 0.5
     loud: [[0, 400], [500, 700]]
@@ -39,6 +43,7 @@ settle:
 
   - name: "a line ending with no quiet to be found is left where it was measured"
     lines: ["one two", "three four"]
+    interior_marks: "'’-"
     sample_count: 1000
     level: 0.5
     loud: [[0, 900]]
@@ -48,6 +53,7 @@ settle:
 
   - name: "a line ending with no room at all is left exactly where it was"
     lines: ["one two", "three four"]
+    interior_marks: "'’-"
     sample_count: 1000
     level: 0.5
     loud: [[0, 400], [500, 700]]
@@ -57,6 +63,7 @@ settle:
 
   - name: "carrying a line ending never leaves the next word without room"
     lines: ["one two", "three four"]
+    interior_marks: "'’-"
     sample_count: 1000
     level: 0.5
     loud: [[0, 400], [500, 700]]

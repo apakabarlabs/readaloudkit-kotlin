@@ -5,8 +5,9 @@
 # alignment's; `timing_error` names the first word whose times cannot stand, by its
 # `kind`, its index in `word` and its printed `line`.
 #
-# `timings` cases marry `words` to the passage of `lines`, split by the Latin-script
-# tokenizer. A case that fits pins every timing; a refused case names its error:
+# `timings` cases marry `words` to the passage of `lines`, split by a tokenizer that
+# keeps the `interior_marks` of their language, which every such case names. A case
+# that fits pins every timing; a refused case names its error:
 # `word_count_mismatch` or `word_mismatch`, with every field the error carries.
 decode:
   - name: "the alignment a server publishes is read as it is served"
@@ -87,6 +88,7 @@ decode:
 timings:
   - name: "measured times land on the words of the passage"
     lines: ["From fairest creatures", "we desire increase,"]
+    interior_marks: "'’-"
     words:
       - {line: 0, text: "From", start: 0, end: 0.3}
       - {line: 0, text: "fairest", start: 0.3, end: 0.9}
@@ -104,6 +106,7 @@ timings:
 
   - name: "a text edited after the markup was made is refused, not slid by one word"
     lines: ["From fairest creatures", "we desire increase, and more"]
+    interior_marks: "'’-"
     words:
       - {line: 0, text: "From", start: 0, end: 0.3}
       - {line: 0, text: "fairest", start: 0.3, end: 0.9}
@@ -115,6 +118,7 @@ timings:
 
   - name: "a word swapped in the text is caught by name"
     lines: ["From fairest creatures", "we desire increases,"]
+    interior_marks: "'’-"
     words:
       - {line: 0, text: "From", start: 0, end: 0.3}
       - {line: 0, text: "fairest", start: 0.3, end: 0.9}
@@ -126,6 +130,7 @@ timings:
 
   - name: "a word moved to another line is caught even when the spelling matches"
     lines: ["From fairest creatures we", "desire increase,"]
+    interior_marks: "'’-"
     words:
       - {line: 0, text: "From", start: 0, end: 0.3}
       - {line: 0, text: "fairest", start: 0.3, end: 0.9}
