@@ -1,6 +1,7 @@
 package fm.apakabar.readaloudkit
 
 import com.charleskorn.kaml.Yaml
+import com.charleskorn.kaml.YamlConfiguration
 import com.charleskorn.kaml.YamlMap
 import com.charleskorn.kaml.YamlNode
 import com.charleskorn.kaml.YamlScalar
@@ -34,8 +35,15 @@ object Cases {
         serializer: KSerializer<T>,
     ): T {
         check(name in shared) { "$name is not in the list of shared cases" }
-        return Yaml.default.decodeFromString(serializer, bytes(name).decodeToString())
+        return decode(bytes(name).decodeToString(), serializer)
     }
+
+    private val strict = Yaml(configuration = YamlConfiguration(strictMode = true))
+
+    fun <T> decode(
+        text: String,
+        serializer: KSerializer<T>,
+    ): T = strict.decodeFromString(serializer, text)
 
     fun tokenizer(interiorMarks: String): WordTokenizer = WordTokenizer(interiorMarks)
 
@@ -50,6 +58,8 @@ object Cases {
         when (node) {
             is YamlScalar -> RecognizerQuirks.Allowance(heard = node.content)
             is YamlMap -> {
+                val unread = node.entries.keys.map { it.content } - setOf("heard", "after")
+                check(unread.isEmpty()) { "an allowance for $written has keys no case reads: $unread" }
                 val heard = checkNotNull(node.get<YamlScalar>("heard")) { "an allowance for $written has no heard spelling" }
                 RecognizerQuirks.Allowance(heard = heard.content, after = node.get<YamlScalar>("after")?.content)
             }
