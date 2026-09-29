@@ -6,6 +6,9 @@ package fm.apakabar.readaloudkit
  * Which marks may live inside a word is supplied by the language. A writing system
  * without spaces needs another tokenizer rather than a different set of marks.
  *
+ * A character, as Unicode clusters it, is a letter or a space by its base: the
+ * code point its combining marks sit on, past any sign prepended to it.
+ *
  * @property interiorMarks Code points that remain part of a word after the word has begun.
  */
 class WordTokenizer(
@@ -81,7 +84,7 @@ class WordTokenizer(
             val closingEnd =
                 bounds
                     .filter { it in afterStart..untilNextWordsMarks }
-                    .firstOrNull { it == untilNextWordsMarks || isWhitespaceAt(line, it) }
+                    .firstOrNull { it == untilNextWordsMarks || isWhitespace(characterAt(line, bounds, it)) }
                     ?: untilNextWordsMarks
             segments.add(
                 LineSegment(
@@ -104,7 +107,7 @@ class WordTokenizer(
     ): Int {
         val lastSpace =
             bounds.indices
-                .lastOrNull { index -> bounds[index] in gap && isWhitespaceAt(line, bounds[index]) }
+                .lastOrNull { index -> bounds[index] in gap && isWhitespace(characterAt(line, bounds, bounds[index])) }
         if (lastSpace == null) {
             val marksStandWithTheWordBefore = !isFirstWord
             return if (marksStandWithTheWordBefore) gap.last + 1 else gap.first
@@ -136,7 +139,7 @@ class WordTokenizer(
         character: String,
         hasStarted: Boolean,
     ): Boolean {
-        if (isLetterAt(character, 0)) return true
+        if (isLetter(character)) return true
         return hasStarted && character.codePoints().allMatch { it in interiorMarks }
     }
 
@@ -148,7 +151,7 @@ class WordTokenizer(
         var end = bounds.indexOf(range.last + 1)
         while (bounds[end] > range.first) {
             val previous = end - 1
-            if (isLetterAt(line, bounds[previous])) break
+            if (isLetter(characterAt(line, bounds, bounds[previous]))) break
             end = previous
         }
         return range.first until bounds[end]

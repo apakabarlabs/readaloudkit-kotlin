@@ -69,9 +69,17 @@ words:
     line: "go\U0001F44D\U0001F3FD on"
     words: ["go", "on"]
 
-  - name: "a prepended Arabic number sign makes one character with the letter after it"
+  - name: "a character is a letter by its base, not by a sign prepended to it"
     line: "؀سال"
-    words: ["ال"]
+    words: ["؀سال"]
+
+  - name: "a letter under a combining mark ends a word as a letter"
+    line: "ab̈, cd"
+    words: ["ab̈", "cd"]
+
+  - name: "a combining mark with no letter under it is not a letter"
+    line: "̈ab"
+    words: ["ab"]
 
 segments:
   - name: "a line splits into pieces that put it back together unchanged"
@@ -125,11 +133,11 @@ segments:
       - {index: 0, word: "go", closing: "\U0001F44D\U0001F3FD", space: " "}
       - {index: 1, word: "on"}
 
-  - name: "a prepended Arabic number sign takes the space after it into one character"
+  - name: "a sign prepended to a space is a space by its base"
     line: "رقم ؀ سال"
     segments:
-      - {index: 0, word: "رقم", space: " "}
-      - {index: 1, opening: "؀ ", word: "سال"}
+      - {index: 0, word: "رقم", space: " ؀ "}
+      - {index: 1, word: "سال"}
 
   - name: "a zero-width non-joiner keeps a Persian word one segment"
     line: "من نمی‌خواهم."
