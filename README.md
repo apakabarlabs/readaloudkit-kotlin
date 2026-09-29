@@ -34,10 +34,15 @@ library is built on readalign-swift.
 ```kotlin
 import fm.apakabar.readaloudkit.RecognizerQuirks
 import fm.apakabar.readaloudkit.SpokenLineTracker
+import fm.apakabar.readaloudkit.WordTokenizer
 
-val tracker = SpokenLineTracker(lines = printedLines, quirks = RecognizerQuirks.none)
+val tracker = SpokenLineTracker(lines = printedLines, quirks = RecognizerQuirks.none, tokenizer = WordTokenizer.latinScript)
 val saidEveryWord = tracker.progress(heard = transcript).isComplete
 ```
+
+The tokenizer is the language's: `WordTokenizer.latinScript` keeps apostrophes and
+hyphens inside a word, and a text in another script passes its own. Nothing here picks
+one for you.
 
 A written word nothing was heard for is left out of `SpokenWords.check(...).matches`
 altogether, so comparing how many matches were faithful with how many there were

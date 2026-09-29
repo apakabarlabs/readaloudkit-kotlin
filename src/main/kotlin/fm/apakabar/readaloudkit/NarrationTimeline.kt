@@ -1,6 +1,5 @@
 package fm.apakabar.readaloudkit
 
-import fm.apakabar.readalign.EnglishSyllableWeighting
 import fm.apakabar.readalign.SilenceHold
 import fm.apakabar.readalign.SpeechWeighting
 import fm.apakabar.readalign.WordSpan
@@ -47,16 +46,17 @@ object NarrationTimeline {
     /**
      * Estimates word timings by speech weight, reserving a pause at each line break.
      *
-     * The default weighting is English-specific. An empty passage, nonpositive
-     * duration, or weighting with no positive total produces an empty timeline.
+     * The tokenizer and the weighting belong to the language of the passage. An empty
+     * passage, nonpositive duration, or weighting with no positive total produces an
+     * empty timeline.
      *
      * [weighting] must return a nonnegative weight for every word.
      */
     fun estimate(
         passage: Passage,
         duration: Double,
-        tokenizer: WordTokenizer = WordTokenizer.latinScript,
-        weighting: SpeechWeighting = EnglishSyllableWeighting(),
+        tokenizer: WordTokenizer,
+        weighting: SpeechWeighting,
     ): List<WordTiming> {
         val words = tokenizer.words(passage)
         if (words.isEmpty() || !(duration > 0)) return emptyList()

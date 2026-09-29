@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @Serializable
 data class AudioCases(
@@ -40,6 +41,7 @@ class PlaybackEnvelopeTests {
     @TestFactory
     fun `fades the edges`(): List<DynamicTest> =
         Cases.tests(AudioCases.all.gain, { it.name }) { case ->
+            assertTrue((case.gains == null) != (case.everyFrame == null), "pins frames or all frames")
             for ((frame, gain) in case.gains ?: emptyList()) {
                 assertEquals(gain.toFloat(), case.gain(at = frame.toLong()), "frame $frame")
             }

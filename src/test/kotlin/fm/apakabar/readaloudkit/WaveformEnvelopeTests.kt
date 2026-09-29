@@ -17,9 +17,7 @@ data class WaveformCase(
     val name: String,
     val samples: List<SampleRun>,
     val bars: Int,
-    val count: Int,
-    val exactly: List<List<Double>>? = null,
-    val above: List<List<Double>>? = null,
+    val envelope: List<Double>,
 ) {
     val built: FloatArray get() = samples.flatMap { run -> List(run.count) { run.value } }.toFloatArray()
 }
@@ -30,8 +28,9 @@ class WaveformEnvelopeTests {
         Cases.tests(AudioCases.all.waveform, { it.name }) { case ->
             val envelope = WaveformEnvelope.make(from = case.built, bars = case.bars)
 
-            assertEquals(case.count, envelope.size)
-            for ((bar, value) in case.exactly ?: emptyList()) assertEquals(value, envelope[bar.toInt()], "bar $bar")
-            for ((bar, value) in case.above ?: emptyList()) assertTrue(envelope[bar.toInt()] > value, "bar $bar")
+            assertEquals(case.envelope.size, envelope.size)
+            for ((bar, pair) in envelope.zip(case.envelope).withIndex()) {
+                assertTrue(Cases.close(pair.first, pair.second), "bar $bar is ${pair.first}")
+            }
         }
 }

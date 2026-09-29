@@ -2,8 +2,11 @@
 #
 # A case gives either `table`, the JSON a server publishes, with the `model` to read
 # from it, or `allowances` directly: written word to heard spellings, each a string or
-# a `{heard, after}` pair. `refused` says decoding the table must fail for this model.
-# Each query asks whether `heard` is allowed for `written`, after `after` if given.
+# a `{heard, after}` pair. A table that does not name the model is refused with
+# `unknown_model`, the requested model and every model the table does name; a table of
+# another shape anywhere, in any model's section, is refused as `malformed`. Otherwise
+# `empty` says whether any substitution is allowed, and each query asks whether `heard`
+# is allowed for `written`, after `after` if given.
 tests:
   - name: "a model's patches are read from its own section"
     table: '{"parakeet": {"tatter''d": ["tattered"], "in": [{"heard": "and", "after": "each"}]}, "spotless": {}}'
@@ -16,6 +19,7 @@ tests:
   - name: "a patch tied to a phrase fires there and nowhere else"
     table: '{"parakeet": {"tatter''d": ["tattered"], "in": [{"heard": "and", "after": "each"}]}, "spotless": {}}'
     model: "parakeet"
+    empty: false
     queries:
       - {heard: "and", written: "in", after: "each", allowed: true}
       - {heard: "and", written: "in", after: "delights", allowed: false}
@@ -31,12 +35,43 @@ tests:
   - name: "a model the table says nothing about is refused, not treated as spotless"
     table: '{"parakeet": {"tatter''d": ["tattered"], "in": [{"heard": "and", "after": "each"}]}, "spotless": {}}'
     model: "parakeet-v4"
-    refused: true
+    unknown_model: {model: "parakeet-v4", known: ["parakeet", "spotless"]}
+
+  - name: "a malformed section of another model refuses the whole table"
+    table: '{"parakeet": {"in": [{"heard": "and"}]}, "spotless": {"in": [7]}}'
+    model: "parakeet"
+    malformed: true
+
+  - name: "a section that is not a table of words is refused"
+    table: '{"parakeet": ["tattered"]}'
+    model: "parakeet"
+    malformed: true
+
+  - name: "a written word whose spellings are not a list is refused"
+    table: '{"parakeet": {"tatter''d": "tattered"}}'
+    model: "parakeet"
+    malformed: true
+
+  - name: "an allowance without a heard spelling is refused"
+    table: '{"parakeet": {"in": [{"after": "each"}]}}'
+    model: "parakeet"
+    malformed: true
+
+  - name: "a heard spelling that is not a string is refused"
+    table: '{"parakeet": {"in": [{"heard": 7}]}}'
+    model: "parakeet"
+    malformed: true
+
+  - name: "a table that is not an object is refused"
+    table: '["parakeet"]'
+    model: "parakeet"
+    malformed: true
 
   - name: "two spellings of one key are added together, not one over the other"
     allowances:
       "Whate’er": ["whatever"]
       "whate’er": ["what’er"]
+    empty: false
     queries:
       - {heard: "whatever", written: "Whate’er", allowed: true}
       - {heard: "whater", written: "whate’er", allowed: true}

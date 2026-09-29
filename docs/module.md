@@ -10,7 +10,11 @@ recognized transcript. A piece is complete only when every printed word is
 faithful; alignment may be loose enough to pair a near miss without crediting it.
 
 ```kotlin
-val tracker = SpokenLineTracker(lines = listOf("From fairest creatures", "we desire increase"))
+val tracker =
+    SpokenLineTracker(
+        lines = listOf("From fairest creatures", "we desire increase"),
+        tokenizer = WordTokenizer.latinScript,
+    )
 val progress = tracker.progress(heard = "From fairest creatures we desire increase")
 val completed = progress.isComplete
 ```

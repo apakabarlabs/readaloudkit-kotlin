@@ -2,25 +2,63 @@ package fm.apakabar.readaloudkit
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 
 @Serializable
 data class AlignmentCases(
-    val tests: List<AlignmentCase>,
+    val decode: List<DecodeCase>,
+    val timings: List<TimingsCase>,
 ) {
     companion object {
-        val all: List<AlignmentCase> by lazy { Cases.load("alignment_tests.yaml", serializer()).tests }
+        val all: AlignmentCases by lazy { Cases.load("alignment_tests.yaml", serializer()) }
     }
 }
 
 @Serializable
+data class ExpectedTimingError(
+    val kind: String,
+    val word: Int,
+    val line: Int,
+) {
+    val error: NarrationAlignment.TimingError
+        get() =
+            when (kind) {
+                "negative_start" -> NarrationAlignment.TimingError.NegativeStart(word = word, line = line)
+                "end_before_start" -> NarrationAlignment.TimingError.EndBeforeStart(word = word, line = line)
+                "start_before_previous" -> NarrationAlignment.TimingError.StartBeforePrevious(word = word, line = line)
+                else -> error("$kind is not a timing error")
+            }
+}
+
+@Serializable
+data class ExpectedAlignment(
+    val piece: String,
+    val duration: Double,
+    val words: List<NarrationAlignment.Word>,
+    val recording: String? = null,
+) {
+    val alignment: NarrationAlignment
+        get() = NarrationAlignment(piece = piece, duration = duration, words = words, recording = recording)
+}
+
+@Serializable
+data class DecodeCase(
+    val name: String,
+    val json: String,
+    val alignment: ExpectedAlignment? = null,
+    val malformed: Boolean? = null,
+    @SerialName("timing_error") val timingError: ExpectedTimingError? = null,
+)
+
+@Serializable
 data class ExpectedTiming(
-    val index: Int,
     val text: String,
     val line: Int,
     val start: Double,
@@ -38,15 +76,16 @@ data class WordMismatch(
     val index: Int,
     val expected: String,
     val found: String,
+    @SerialName("expected_line") val expectedLine: Int,
+    @SerialName("found_line") val foundLine: Int,
 )
 
 @Serializable
-data class AlignmentCase(
+data class TimingsCase(
     val name: String,
     val lines: List<String>,
     val words: List<NarrationAlignment.Word>,
-    val count: Int? = null,
-    @SerialName("timings_at") val timingsAt: List<ExpectedTiming>? = null,
+    val timings: List<ExpectedTiming>? = null,
     @SerialName("word_count_mismatch") val wordCountMismatch: CountMismatch? = null,
     @SerialName("word_mismatch") val wordMismatch: WordMismatch? = null,
 ) {
@@ -54,30 +93,52 @@ data class AlignmentCase(
         get() =
             wordCountMismatch?.let { NarrationAlignment.AlignmentError.WordCountMismatch(expected = it.expected, found = it.found) }
                 ?: wordMismatch?.let {
-                    NarrationAlignment.AlignmentError.WordMismatch(index = it.index, expected = it.expected, found = it.found)
+                    NarrationAlignment.AlignmentError.WordMismatch(
+                        index = it.index,
+                        expected = it.expected,
+                        found = it.found,
+                        expectedLine = it.expectedLine,
+                        foundLine = it.foundLine,
+                    )
                 }
 }
 
 class NarrationAlignmentTests {
     @TestFactory
+    fun `reads what a server publishes`(): List<DynamicTest> =
+        Cases.tests(AlignmentCases.all.decode, { it.name }) { case ->
+            val data = case.json.toByteArray()
+            case.timingError?.let { expected ->
+                assertEquals(expected.error, assertFailsWith<NarrationAlignment.TimingError> { NarrationAlignment.decode(data) })
+                return@tests
+            }
+            if (case.malformed == true) {
+                val error = assertFailsWith<SerializationException> { NarrationAlignment.decode(data) }
+                assertFalse(error is NarrationAlignment.TimingError, "$error is a timing error, not another shape")
+                return@tests
+            }
+            val expected = checkNotNull(case.alignment) { "a readable case pins the alignment" }
+            assertEquals(expected.alignment, NarrationAlignment.decode(data))
+        }
+
+    @TestFactory
     fun `marries times to words`(): List<DynamicTest> =
-        Cases.tests(AlignmentCases.all, { it.name }) { case ->
+        Cases.tests(AlignmentCases.all.timings, { it.name }) { case ->
             val alignment = NarrationAlignment(piece = "1", duration = 10.0, words = case.words)
             val passage = Passage(lines = case.lines)
             val refusal = case.refusal
             if (refusal != null) {
-                assertEquals(refusal, assertFailsWith<NarrationAlignment.AlignmentError> { alignment.timings(passage) })
+                assertEquals(
+                    refusal,
+                    assertFailsWith<NarrationAlignment.AlignmentError> { alignment.timings(passage, WordTokenizer.latinScript) },
+                )
                 return@tests
             }
-            val timings = alignment.timings(passage)
-            case.count?.let { assertEquals(it, timings.size) }
-            for (expected in case.timingsAt ?: emptyList()) {
-                val timing = timings[expected.index]
-                assertEquals(expected.text, timing.word.text)
-                assertEquals(expected.line, timing.word.lineIndex)
-                assertEquals(expected.start, timing.start)
-                assertEquals(expected.end, timing.end)
-            }
+            val timings = alignment.timings(passage, WordTokenizer.latinScript)
+            assertEquals(
+                checkNotNull(case.timings) { "a fitting case pins its timings" },
+                timings.map { ExpectedTiming(text = it.word.text, line = it.word.lineIndex, start = it.start, end = it.end) },
+            )
         }
 
     @Test
@@ -95,16 +156,12 @@ class NarrationAlignmentTests {
     }
 
     @Test
-    fun `the alignment a server publishes is read as it is served`() {
-        val served =
-            """
-            {"piece": "18", "duration": 4.5, "recording": "narration-018.mp3",
-             "words": [{"line": 0, "text": "Shall", "start": 0.5, "end": 0.8}]}
-            """.trimIndent().toByteArray()
-        val alignment = NarrationAlignment.decode(served)
+    fun `an alignment without a recording is written without one`() {
+        val original = NarrationAlignment(piece = "1", duration = 1.0, words = emptyList())
 
-        assertEquals("18", alignment.piece)
-        assertEquals("narration-018.mp3", alignment.recording)
-        assertEquals(listOf(NarrationAlignment.Word(line = 0, text = "Shall", start = 0.5, end = 0.8)), alignment.words)
+        assertEquals(
+            """{"piece":"1","duration":1.0,"words":[]}""",
+            Json.encodeToString(NarrationAlignment.serializer(), original),
+        )
     }
 }

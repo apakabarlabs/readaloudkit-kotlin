@@ -1,6 +1,7 @@
 package fm.apakabar.readaloudkit
 
 import com.charleskorn.kaml.YamlNode
+import fm.apakabar.readalign.WordMatch
 import kotlinx.serialization.Serializable
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
@@ -18,12 +19,26 @@ data class SpokenWordsCases(
 }
 
 @Serializable
+data class ExpectedMatch(
+    val expected: List<Int>,
+    val heard: List<Int>,
+) {
+    companion object {
+        fun of(match: WordMatch): ExpectedMatch =
+            ExpectedMatch(
+                expected = listOf(match.expected.first, match.expected.last + 1),
+                heard = listOf(match.heard.first, match.heard.last + 1),
+            )
+    }
+}
+
+@Serializable
 data class SpokenWordsCase(
     val name: String,
     val expected: List<String>,
     val heard: List<String>,
     val quirks: Map<String, List<YamlNode>>? = null,
-    val matches: Int? = null,
+    val matches: List<ExpectedMatch>,
     val faithful: Set<Int>,
 )
 
@@ -41,7 +56,7 @@ class SpokenWordsTests {
         Cases.tests(SpokenWordsCases.all.tests, { it.name }) { case ->
             val checked = SpokenWords.check(expected = case.expected, heard = case.heard, quirks = Cases.quirks(case.quirks))
 
-            case.matches?.let { assertEquals(it, checked.matches.size) }
+            assertEquals(case.matches, checked.matches.map(ExpectedMatch::of))
             assertEquals(case.faithful, checked.faithful)
         }
 
@@ -54,7 +69,7 @@ class SpokenWordsTests {
     @Test
     fun `the reader's word checks are that same pass`() {
         val quirks = RecognizerQuirks(allowances = mapOf("heir" to listOf("air"), "O" to listOf("oh")))
-        val tracker = SpokenLineTracker(line = "O heir of love", quirks = quirks)
+        val tracker = SpokenLineTracker(line = "O heir of love", quirks = quirks, tokenizer = WordTokenizer.latinScript)
         val progress = tracker.progress(heard = "oh air of dove")
         val checked =
             SpokenWords.check(

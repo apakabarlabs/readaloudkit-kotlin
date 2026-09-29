@@ -28,15 +28,12 @@ data class TrackerCase(
     val lines: List<String>,
     val quirks: Map<String, List<YamlNode>>? = null,
     @SerialName("interior_marks") val interiorMarks: String? = null,
+    @SerialName("line_lengths") val lineLengths: List<Int>,
     val heard: String? = null,
     val checks: List<WordCheck>? = null,
-    @SerialName("checks_at") val checksAt: Map<String, WordCheck>? = null,
-    val rest: WordCheck? = null,
-    @SerialName("states_at") val statesAt: Map<String, String>? = null,
     val complete: Boolean? = null,
     @SerialName("all_wrong") val allWrong: Boolean? = null,
     val attempts: List<ExpectedAttempt>? = null,
-    @SerialName("line_lengths") val lineLengths: List<Int>? = null,
     val untried: List<String>? = null,
 ) {
     val tracker: SpokenLineTracker
@@ -48,32 +45,16 @@ class SpokenLineTrackerTests {
     fun `checks the reading`(): List<DynamicTest> =
         Cases.tests(TrackerCases.all, { it.name }) { case ->
             val tracker = case.tracker
-            case.lineLengths?.let { assertEquals(it, tracker.lineLengths) }
+            assertEquals(case.lineLengths, tracker.lineLengths)
             case.untried?.let { untried -> assertEquals(untried.map(::wordReadingState), tracker.untriedWordStates) }
-            case.heard?.let { heard -> check(tracker.progress(heard = heard), tracker, case) }
-        }
+            val heard = case.heard ?: return@tests
+            val progress = tracker.progress(heard = heard)
 
-    private fun check(
-        progress: SpokenLineTracker.Progress,
-        tracker: SpokenLineTracker,
-        case: TrackerCase,
-    ) {
-        case.checks?.let { assertEquals(it, progress.checks) }
-        val pinned = (case.checksAt ?: emptyMap()).mapKeys { (key, _) -> Cases.index(key, case.name) }
-        for ((index, check) in pinned) assertEquals(check, progress.checks[index], "word $index")
-        case.rest?.let { rest ->
-            for (index in progress.checks.indices.filter { it !in pinned }) {
-                assertEquals(rest, progress.checks[index], "word $index")
+            assertEquals(checkNotNull(case.checks) { "a heard case pins its checks" }, progress.checks)
+            assertEquals(checkNotNull(case.complete) { "and whether it is complete" }, progress.isComplete)
+            assertEquals(checkNotNull(case.allWrong) { "and whether it is all wrong" }, progress.isAllWrong)
+            case.attempts?.let { attempts ->
+                assertEquals(attempts.map { WordAttempt(word = it.word, check = it.check) }, tracker.attempts(progress))
             }
         }
-        for ((key, state) in case.statesAt ?: emptyMap()) {
-            val index = Cases.index(key, case.name)
-            assertEquals(wordReadingState(state), progress.wordStates[index], "word $index")
-        }
-        case.complete?.let { assertEquals(it, progress.isComplete) }
-        case.allWrong?.let { assertEquals(it, progress.isAllWrong) }
-        case.attempts?.let { attempts ->
-            assertEquals(attempts.map { WordAttempt(word = it.word, check = it.check) }, tracker.attempts(progress))
-        }
-    }
 }

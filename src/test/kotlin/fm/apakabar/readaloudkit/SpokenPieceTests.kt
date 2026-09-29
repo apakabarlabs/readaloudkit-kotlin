@@ -16,7 +16,7 @@ class SpokenPieceTests {
 
     @Test
     fun `the states come back apart line by line`() {
-        val tracker = SpokenLineTracker(lines = quatrain)
+        val tracker = SpokenLineTracker(lines = quatrain, tokenizer = WordTokenizer.latinScript)
         val progress = tracker.progress(heard = quatrain.joinToString(" "))
         val states = progress.wordStates
 
@@ -24,6 +24,13 @@ class SpokenPieceTests {
             assertEquals(length, tracker.wordStates(states, forLineAt = index).size)
         }
         assertTrue(tracker.wordStates(states, forLineAt = 4).isEmpty())
+    }
+
+    @Test
+    fun `a check shows as the state a reader sees`() {
+        val progress = SpokenLineTracker.Progress(listOf(WordCheck.CORRECT, WordCheck.CLOSE, WordCheck.WRONG))
+
+        assertEquals(listOf(WordReadingState.SAID, WordReadingState.CLOSE, WordReadingState.MISSED), progress.wordStates)
     }
 
     @Test

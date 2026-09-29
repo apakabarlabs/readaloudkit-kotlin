@@ -8,7 +8,7 @@ import kotlin.test.assertTrue
 class ReadmeTests {
     private val usage =
         """
-        val tracker = SpokenLineTracker(lines = printedLines, quirks = RecognizerQuirks.none)
+        val tracker = SpokenLineTracker(lines = printedLines, quirks = RecognizerQuirks.none, tokenizer = WordTokenizer.latinScript)
         val saidEveryWord = tracker.progress(heard = transcript).isComplete
         """.trimIndent()
 
@@ -16,7 +16,7 @@ class ReadmeTests {
         printedLines: List<String>,
         transcript: String,
     ): Boolean {
-        val tracker = SpokenLineTracker(lines = printedLines, quirks = RecognizerQuirks.none)
+        val tracker = SpokenLineTracker(lines = printedLines, quirks = RecognizerQuirks.none, tokenizer = WordTokenizer.latinScript)
         val saidEveryWord = tracker.progress(heard = transcript).isComplete
         return saidEveryWord
     }

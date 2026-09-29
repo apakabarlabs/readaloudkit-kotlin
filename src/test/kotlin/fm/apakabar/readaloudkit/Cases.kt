@@ -6,6 +6,7 @@ import com.charleskorn.kaml.YamlNode
 import com.charleskorn.kaml.YamlScalar
 import kotlinx.serialization.KSerializer
 import org.junit.jupiter.api.DynamicTest
+import kotlin.math.abs
 
 object Cases {
     val shared =
@@ -53,10 +54,12 @@ object Cases {
             else -> error("an allowance for $written is neither a spelling nor a {heard, after} pair")
         }
 
-    fun index(
-        key: String,
-        name: String,
-    ): Int = checkNotNull(key.toIntOrNull()) { "$name: $key is not a word index" }
+    private const val WITHIN = 0.000_000_001
+
+    fun close(
+        actual: Double,
+        expected: Double,
+    ): Boolean = abs(actual - expected) <= WITHIN
 
     fun <T> tests(
         cases: List<T>,

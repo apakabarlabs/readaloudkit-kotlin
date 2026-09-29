@@ -1,9 +1,90 @@
-# Supplied word times married to the words of a passage, or refused.
+# Supplied word times: how an alignment is read, and how it is married to a passage.
 #
-# `timings_at` pins timings by word index; `count` is how many there are. A refused
-# case names its error: `word_count_mismatch` or `word_mismatch`, with the fields the
-# error carries.
-tests:
+# `decode` cases read `json` as a server would publish it. A case that decodes pins
+# the whole alignment; `malformed` says the JSON has another shape or type than the
+# alignment's; `timing_error` names the first word whose times cannot stand, by its
+# `kind`, its index in `word` and its printed `line`.
+#
+# `timings` cases marry `words` to the passage of `lines`, split by the Latin-script
+# tokenizer. A case that fits pins every timing; a refused case names its error:
+# `word_count_mismatch` or `word_mismatch`, with every field the error carries.
+decode:
+  - name: "the alignment a server publishes is read as it is served"
+    json: '{"piece": "18", "duration": 4.5, "recording": "narration-018.mp3", "words": [{"line": 0, "text": "Shall", "start": 0.5, "end": 0.8}, {"line": 0, "text": "I", "start": 0.8, "end": 0.9}]}'
+    alignment:
+      piece: "18"
+      duration: 4.5
+      recording: "narration-018.mp3"
+      words:
+        - {line: 0, text: "Shall", start: 0.5, end: 0.8}
+        - {line: 0, text: "I", start: 0.8, end: 0.9}
+
+  - name: "an alignment without a recording is read without one"
+    json: '{"piece": "1", "duration": 2, "words": [{"line": 0, "text": "O", "start": 0, "end": 0.4}]}'
+    alignment:
+      piece: "1"
+      duration: 2
+      words:
+        - {line: 0, text: "O", start: 0, end: 0.4}
+
+  - name: "words that start together and take no time are in order"
+    json: '{"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": 0.5, "end": 0.5}, {"line": 1, "text": "b", "start": 0.5, "end": 0.5}]}'
+    alignment:
+      piece: "1"
+      duration: 1
+      words:
+        - {line: 0, text: "a", start: 0.5, end: 0.5}
+        - {line: 1, text: "b", start: 0.5, end: 0.5}
+
+  - name: "a piece named by a number rather than a string is refused"
+    json: '{"piece": 18, "duration": 4.5, "words": []}'
+    malformed: true
+
+  - name: "a duration written as a string is refused"
+    json: '{"piece": "18", "duration": "4.5", "words": []}'
+    malformed: true
+
+  - name: "a line written as a string is refused"
+    json: '{"piece": "1", "duration": 1, "words": [{"line": "0", "text": "a", "start": 0, "end": 0.1}]}'
+    malformed: true
+
+  - name: "a line with a fraction is refused"
+    json: '{"piece": "1", "duration": 1, "words": [{"line": 0.5, "text": "a", "start": 0, "end": 0.1}]}'
+    malformed: true
+
+  - name: "a line written with a decimal point but no fraction is that line"
+    json: '{"piece": "1", "duration": 1, "words": [{"line": 1.0, "text": "a", "start": 0, "end": 0.1}]}'
+    alignment:
+      piece: "1"
+      duration: 1
+      words:
+        - {line: 1, text: "a", start: 0, end: 0.1}
+
+  - name: "a word time written as a string is refused"
+    json: '{"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": "0", "end": 0.1}]}'
+    malformed: true
+
+  - name: "an alignment without its words is refused"
+    json: '{"piece": "1", "duration": 1}'
+    malformed: true
+
+  - name: "a word that starts before the recording is refused"
+    json: '{"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": -0.1, "end": 0.1}]}'
+    timing_error: {kind: negative_start, word: 0, line: 0}
+
+  - name: "a word that ends before it starts is refused"
+    json: '{"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": 0, "end": 0.2}, {"line": 0, "text": "b", "start": 0.4, "end": 0.3}]}'
+    timing_error: {kind: end_before_start, word: 1, line: 0}
+
+  - name: "a word that starts before the one ahead of it on its line is refused"
+    json: '{"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": 0.3, "end": 0.4}, {"line": 0, "text": "b", "start": 0.2, "end": 0.5}]}'
+    timing_error: {kind: start_before_previous, word: 1, line: 0}
+
+  - name: "a word on the next line that starts before the word ahead of it is refused"
+    json: '{"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": 0.3, "end": 0.4}, {"line": 1, "text": "b", "start": 0.1, "end": 0.2}]}'
+    timing_error: {kind: start_before_previous, word: 1, line: 1}
+
+timings:
   - name: "measured times land on the words of the passage"
     lines: ["From fairest creatures", "we desire increase,"]
     words:
@@ -13,10 +94,13 @@ tests:
       - {line: 1, text: "we", start: 1.8, end: 2.0}
       - {line: 1, text: "desire", start: 2.0, end: 2.5}
       - {line: 1, text: "increase", start: 2.5, end: 3.2}
-    count: 6
-    timings_at:
-      - {index: 0, text: "From", line: 0, start: 0, end: 0.3}
-      - {index: 3, text: "we", line: 1, start: 1.8, end: 2.0}
+    timings:
+      - {text: "From", line: 0, start: 0, end: 0.3}
+      - {text: "fairest", line: 0, start: 0.3, end: 0.9}
+      - {text: "creatures", line: 0, start: 0.9, end: 1.5}
+      - {text: "we", line: 1, start: 1.8, end: 2.0}
+      - {text: "desire", line: 1, start: 2.0, end: 2.5}
+      - {text: "increase", line: 1, start: 2.5, end: 3.2}
 
   - name: "a text edited after the markup was made is refused, not slid by one word"
     lines: ["From fairest creatures", "we desire increase, and more"]
@@ -38,7 +122,7 @@ tests:
       - {line: 1, text: "we", start: 1.8, end: 2.0}
       - {line: 1, text: "desire", start: 2.0, end: 2.5}
       - {line: 1, text: "increase", start: 2.5, end: 3.2}
-    word_mismatch: {index: 5, expected: "increases", found: "increase"}
+    word_mismatch: {index: 5, expected: "increases", found: "increase", expected_line: 1, found_line: 1}
 
   - name: "a word moved to another line is caught even when the spelling matches"
     lines: ["From fairest creatures we", "desire increase,"]
@@ -49,4 +133,4 @@ tests:
       - {line: 1, text: "we", start: 1.8, end: 2.0}
       - {line: 1, text: "desire", start: 2.0, end: 2.5}
       - {line: 1, text: "increase", start: 2.5, end: 3.2}
-    word_mismatch: {index: 3, expected: "we", found: "we"}
+    word_mismatch: {index: 3, expected: "we", found: "we", expected_line: 0, found_line: 1}

@@ -1,6 +1,6 @@
 SWIFT_DIR = ../readaloudkit-swift
 TEST_RESOURCES = src/test/resources
-COMMENTCENSOR_REF ?= 48d702a6ba4ace9af0bf996fad2fff9a012f25f9
+COMMENTCENSOR_REF ?= v0.3.3
 COMMENTCENSOR_ENV = build/commentcensor
 COMMENTCENSOR = $(COMMENTCENSOR_ENV)/bin/commentcensor
 

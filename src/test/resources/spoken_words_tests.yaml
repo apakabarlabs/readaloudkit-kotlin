@@ -1,40 +1,56 @@
 # Which heard words faithfully represent the written words they were paired with.
 #
-# `faithful` is the set of match indices accepted; `matches`, when given, is how many
-# pairs the aligner made. `quirks` maps a written word to heard spellings.
+# `matches` is every pair the aligner made, in order, each as half-open `[lower, upper)`
+# ranges of expected and heard word indices; `faithful` is the set of match indices
+# accepted. `quirks` maps a written word to heard spellings.
 tests:
   - name: "a word said as written is faithful"
     expected: ["love"]
     heard: ["love"]
+    matches:
+      - {expected: [0, 1], heard: [0, 1]}
     faithful: [0]
 
   - name: "a similar word is paired but not faithful"
     expected: ["love"]
     heard: ["dove"]
-    matches: 1
+    matches:
+      - {expected: [0, 1], heard: [0, 1]}
     faithful: []
 
   - name: "an elision spelled out is faithful without a patch"
     expected: ["tatter’d"]
     heard: ["tattered"]
+    matches:
+      - {expected: [0, 1], heard: [0, 1]}
     faithful: [0]
 
   - name: "a patched word is paired by the patch and then accepted by it"
     expected: ["heir"]
     heard: ["air"]
     quirks: {"heir": ["air"], "O": ["oh"]}
-    matches: 1
+    matches:
+      - {expected: [0, 1], heard: [0, 1]}
     faithful: [0]
 
   - name: "without the table the same pair is not even put together"
     expected: ["heir"]
     heard: ["air"]
+    matches: []
     faithful: []
 
   - name: "a word nothing was heard for is neither paired nor faithful"
     expected: ["love", "is"]
     heard: ["love"]
-    matches: 1
+    matches:
+      - {expected: [0, 1], heard: [0, 1]}
+    faithful: [0]
+
+  - name: "two written words heard as one are one match"
+    expected: ["what", "ever"]
+    heard: ["whatever"]
+    matches:
+      - {expected: [0, 2], heard: [0, 1]}
     faithful: [0]
 
 faithful:

@@ -1,6 +1,7 @@
 package fm.apakabar.readaloudkit
 
-import fm.apakabar.readalign.SpeechWeighting
+import fm.apakabar.readalign.EnglishSyllableWeighting
+import fm.apakabar.readalign.EvenWeighting
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.junit.jupiter.api.DynamicTest
@@ -22,20 +23,16 @@ data class TimelineCases(
     }
 }
 
-@Serializable
-data class ExpectedEdge(
-    val word: Int,
-    val start: Double? = null,
-    val end: Double? = null,
-    val within: Double = 0.0,
+fun assertTimings(
+    expected: List<List<Double>>,
+    actual: List<WordTiming>,
+    name: String,
 ) {
-    fun check(
-        timing: WordTiming,
-        name: String,
-    ) {
-        assertTrue(start != null || end != null, "$name: word $word pins nothing")
-        start?.let { assertTrue(abs(timing.start - it) <= within, "$name: start of word $word is ${timing.start}") }
-        end?.let { assertTrue(abs(timing.end - it) <= within, "$name: end of word $word is ${timing.end}") }
+    assertEquals(expected.size, actual.size, "$name: one timing per word")
+    for ((index, pair) in actual.zip(expected).withIndex()) {
+        val (timing, span) = pair
+        assertTrue(Cases.close(timing.start, span[0]), "$name: start of word $index is ${timing.start}")
+        assertTrue(Cases.close(timing.end, span[1]), "$name: end of word $index is ${timing.end}")
     }
 }
 
@@ -48,8 +45,7 @@ data class SettleCase(
     val loud: List<List<Int>>,
     val rate: Double,
     val marks: List<List<Double>>,
-    val want: List<ExpectedEdge>,
-    val joined: List<Int>? = null,
+    val timings: List<List<Double>>,
 ) {
     val samples: FloatArray
         get() {
@@ -58,7 +54,7 @@ data class SettleCase(
             return samples
         }
 
-    val timings: List<WordTiming>
+    val marked: List<WordTiming>
         get() =
             WordTokenizer.latinScript.words(Passage(lines = lines)).zip(marks) { word, mark ->
                 WordTiming(word = word, start = mark[0], end = mark[1])
@@ -71,9 +67,9 @@ data class HoldCase(
     val spans: List<List<Double>>,
     val duration: Double,
     val limit: Double? = null,
-    val ends: List<ExpectedEdge>,
+    val timings: List<List<Double>>,
 ) {
-    val timings: List<WordTiming>
+    val marked: List<WordTiming>
         get() {
             val line = List(spans.size) { "word" }.joinToString(" ")
             val words = WordTokenizer.latinScript.words(Passage(lines = listOf(line)))
@@ -94,29 +90,30 @@ class NarrationTimelineTests {
     private val duration = 12.0
 
     private val timings: List<WordTiming>
-        get() = NarrationTimeline.estimate(passage, duration = duration)
+        get() =
+            NarrationTimeline.estimate(
+                passage,
+                duration = duration,
+                tokenizer = WordTokenizer.latinScript,
+                weighting = EnglishSyllableWeighting(),
+            )
 
     @TestFactory
     fun `settles line endings`(): List<DynamicTest> =
         Cases.tests(TimelineCases.all.settle, { it.name }) { case ->
-            val settled = NarrationTimeline.settledBetweenLines(case.timings, samples = case.samples, sampleRate = case.rate)
+            val settled = NarrationTimeline.settledBetweenLines(case.marked, samples = case.samples, sampleRate = case.rate)
 
-            for (edge in case.want) edge.check(settled[edge.word], case.name)
-            for (word in case.joined ?: emptyList()) assertEquals(settled[word].end, settled[word + 1].start)
-            for ((earlier, later) in settled.zipWithNext()) {
-                assertTrue(later.start >= earlier.end)
-                assertTrue(later.end > later.start)
-            }
+            assertTimings(case.timings, settled, case.name)
         }
 
     @TestFactory
     fun `holds words open`(): List<DynamicTest> =
         Cases.tests(TimelineCases.all.hold, { it.name }) { case ->
             val held =
-                case.limit?.let { NarrationTimeline.heldToTheNextWord(case.timings, duration = case.duration, limit = it) }
-                    ?: NarrationTimeline.heldToTheNextWord(case.timings, duration = case.duration)
+                case.limit?.let { NarrationTimeline.heldToTheNextWord(case.marked, duration = case.duration, limit = it) }
+                    ?: NarrationTimeline.heldToTheNextWord(case.marked, duration = case.duration)
 
-            for (edge in case.ends) edge.check(held[edge.word], case.name)
+            assertTimings(case.timings, held, case.name)
         }
 
     @Test
@@ -159,10 +156,8 @@ class NarrationTimelineTests {
 
     @Test
     fun `a weighting that treats every word alike splits the time evenly`() {
-        class FlatWeighting : SpeechWeighting {
-            override fun weight(word: String): Double = 1.0
-        }
-        val estimated = NarrationTimeline.estimate(passage, duration = duration, weighting = FlatWeighting())
+        val estimated =
+            NarrationTimeline.estimate(passage, duration = duration, tokenizer = WordTokenizer.latinScript, weighting = EvenWeighting())
         val first = assertNotNull(estimated.firstOrNull())
         val last = assertNotNull(estimated.lastOrNull())
 
@@ -226,6 +221,14 @@ class NarrationTimelineTests {
 
     @Test
     fun `a recording of unknown length yields no timings`() {
-        assertTrue(NarrationTimeline.estimate(passage, duration = 0.0).isEmpty())
+        val estimated =
+            NarrationTimeline.estimate(
+                passage,
+                duration = 0.0,
+                tokenizer = WordTokenizer.latinScript,
+                weighting = EnglishSyllableWeighting(),
+            )
+
+        assertTrue(estimated.isEmpty())
     }
 }

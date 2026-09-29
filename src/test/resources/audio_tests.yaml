@@ -4,7 +4,7 @@
 # `every_frame` for every frame of the buffer.
 #
 # `waveform` cases build samples from `samples`, runs of `count` samples at `value`,
-# and pin how many bars come back, bars that are `exactly` a value and bars `above` one.
+# and pin every bar WaveformEnvelope returns, equal to within a billionth.
 gain:
   - name: "a cut segment reaches silence at both edges"
     frame_count: 100
@@ -24,16 +24,14 @@ waveform:
   - name: "silence stays flat and sound keeps its shape"
     samples: [{value: 0, count: 8}, {value: 0.5, count: 8}]
     bars: 4
-    count: 4
-    exactly: [[0, 0], [1, 0]]
-    above: [[2, 0.8], [3, 0.8]]
+    envelope: [0, 0, 0.9773200019271194, 0.9773200019271194]
 
   - name: "a short recording does not invent empty bars"
     samples: [{value: 0.1, count: 1}, {value: 0.2, count: 1}]
     bars: 48
-    count: 2
+    envelope: [0.6666666734976858, 0.8004577826816776]
 
   - name: "no samples make no bars"
     samples: []
     bars: 48
-    count: 0
+    envelope: []

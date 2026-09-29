@@ -90,6 +90,7 @@ class RecognizerQuirks(
          *
          * The JSON root maps model identifiers to written words. Each written word maps
          * to an array containing either a heard string or `{ "heard": ..., "after": ... }`.
+         * Every model's section is read, so a table malformed anywhere is refused.
          *
          * @throws UnknownModel when the table has no section for [model].
          * @throws SerializationException when [data] is not such a table.
@@ -98,13 +99,14 @@ class RecognizerQuirks(
             data: ByteArray,
             model: String,
         ): RecognizerQuirks {
-            val table = objectOf(Json.parseToJsonElement(utf8(data)), "the table")
-            val section = table[model] ?: throw UnknownModel(model = model, known = table.keys.toList())
-            val allowances =
-                objectOf(section, model).mapValues { (written, listed) ->
-                    val entries = listed as? JsonArray ?: throw SerializationException("$written in $model is not an array")
-                    entries.map { allowance(it, written) }
+            val table =
+                objectOf(Json.parseToJsonElement(utf8(data)), "the table").mapValues { (name, section) ->
+                    objectOf(section, name).mapValues { (written, listed) ->
+                        val entries = listed as? JsonArray ?: throw SerializationException("$written in $name is not an array")
+                        entries.map { allowance(it, written) }
+                    }
                 }
+            val allowances = table[model] ?: throw UnknownModel(model = model, known = table.keys.toList())
             return RecognizerQuirks(allowances)
         }
 

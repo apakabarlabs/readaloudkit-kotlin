@@ -69,12 +69,12 @@ data class WordAttempt(
 class SpokenLineTracker(
     lines: List<String>,
     val quirks: RecognizerQuirks = RecognizerQuirks.none,
-    val tokenizer: WordTokenizer = WordTokenizer.latinScript,
+    val tokenizer: WordTokenizer,
 ) {
     constructor(
         line: String,
         quirks: RecognizerQuirks = RecognizerQuirks.none,
-        tokenizer: WordTokenizer = WordTokenizer.latinScript,
+        tokenizer: WordTokenizer,
     ) : this(listOf(line), quirks, tokenizer)
 
     /**
@@ -155,7 +155,7 @@ class SpokenLineTracker(
         /** Counts spoken words in each line using [tokenizer]. */
         fun wordsPerLine(
             of: List<String>,
-            tokenizer: WordTokenizer = WordTokenizer.latinScript,
+            tokenizer: WordTokenizer,
         ): List<Int> = of.map { tokenizer.wordRanges(it).size }
 
         /** Returns the part of a passage-wide state array belonging to one line. */

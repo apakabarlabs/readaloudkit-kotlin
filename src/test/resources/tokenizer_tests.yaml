@@ -49,6 +49,30 @@ words:
     interior_marks: "-"
     words: ["beauty", "s", "rose"]
 
+  - name: "a zero-width non-joiner inside a Persian word does not split it"
+    line: "من نمی‌خواهم"
+    words: ["من", "نمی‌خواهم"]
+
+  - name: "a Bengali conjunct is part of its word"
+    line: "ক্ষমা করো"
+    words: ["ক্ষমা", "করো"]
+
+  - name: "a zero-width joiner inside a Bengali word does not split it"
+    line: "র‍্যাব এল"
+    words: ["র‍্যাব", "এল"]
+
+  - name: "an emoji skin-tone modifier after a letter stays with that letter"
+    line: "ok\U0001F3FDay"
+    words: ["ok\U0001F3FDay"]
+
+  - name: "an emoji with its modifier after a word is not part of the word"
+    line: "go\U0001F44D\U0001F3FD on"
+    words: ["go", "on"]
+
+  - name: "a prepended Arabic number sign makes one character with the letter after it"
+    line: "؀سال"
+    words: ["ال"]
+
 segments:
   - name: "a line splits into pieces that put it back together unchanged"
     line: "Thy self thy foe, to thy sweet self too cruel:"
@@ -94,6 +118,24 @@ segments:
   - name: "an empty line has no segments"
     line: ""
     segments: []
+
+  - name: "an emoji with its modifier closes the word before it"
+    line: "go\U0001F44D\U0001F3FD on"
+    segments:
+      - {index: 0, word: "go", closing: "\U0001F44D\U0001F3FD", space: " "}
+      - {index: 1, word: "on"}
+
+  - name: "a prepended Arabic number sign takes the space after it into one character"
+    line: "رقم ؀ سال"
+    segments:
+      - {index: 0, word: "رقم", space: " "}
+      - {index: 1, opening: "؀ ", word: "سال"}
+
+  - name: "a zero-width non-joiner keeps a Persian word one segment"
+    line: "من نمی‌خواهم."
+    segments:
+      - {index: 0, word: "من", space: " "}
+      - {index: 1, word: "نمی‌خواهم", closing: "."}
 
   - name: "space before the first word is a wordless segment of its own"
     line: "  go"

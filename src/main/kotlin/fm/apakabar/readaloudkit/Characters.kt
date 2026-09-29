@@ -1,6 +1,8 @@
 package fm.apakabar.readaloudkit
 
-import java.text.BreakIterator
+import com.ibm.icu.lang.UCharacter
+import com.ibm.icu.lang.UProperty
+import com.ibm.icu.text.BreakIterator
 
 internal fun characterBounds(text: String): IntArray {
     val bounds = mutableListOf(0)
@@ -22,14 +24,9 @@ internal fun characters(text: String): List<String> {
 internal fun isLetterAt(
     text: String,
     offset: Int,
-): Boolean = Character.isAlphabetic(text.codePointAt(offset))
+): Boolean = UCharacter.hasBinaryProperty(text.codePointAt(offset), UProperty.ALPHABETIC)
 
 internal fun isWhitespaceAt(
     text: String,
     offset: Int,
-): Boolean {
-    val code = text.codePointAt(offset)
-    return Character.isSpaceChar(code) || code in CONTROLS_UNICODE_COUNTS_AS_WHITESPACE
-}
-
-private val CONTROLS_UNICODE_COUNTS_AS_WHITESPACE = setOf(0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x85)
+): Boolean = UCharacter.hasBinaryProperty(text.codePointAt(offset), UProperty.WHITE_SPACE)
