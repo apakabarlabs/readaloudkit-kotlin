@@ -9,6 +9,7 @@ import kotlin.test.assertEquals
 data class ProgressCases(
     val pieces: List<PiecesCase>,
     val stage: List<StageCase>,
+    val stored: List<StoredCase>,
 ) {
     companion object {
         val all: ProgressCases by lazy { Cases.load("progress_tests.yaml", serializer()) }
@@ -29,6 +30,14 @@ data class StageCase(
     val name: String,
     val pieces: List<String>,
     val stage: String,
+)
+
+@Serializable
+data class StoredCase(
+    val name: String,
+    val raw: Int,
+    val stage: String? = null,
+    val unknown: Boolean? = null,
 )
 
 class PieceProgressTests {

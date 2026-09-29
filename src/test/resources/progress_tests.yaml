@@ -1,4 +1,7 @@
 # Where the pieces of a staged reading, and the stage made of them, stand.
+#
+# `stored` cases restore a stage state from its stored `raw` value: either the `stage`
+# it names, or `unknown` when this build cannot read it and refuses it.
 pieces:
   - name: "progress keeps non-consecutive pieces in their positions"
     total: 7
@@ -11,3 +14,10 @@ stage:
   - {name: "every piece cleared makes the stage complete", pieces: [cleared, cleared, cleared], stage: complete}
   - {name: "one tried piece makes the stage started", pieces: [tried, untouched], stage: started}
   - {name: "untouched pieces leave the stage untouched", pieces: [untouched, untouched, untouched], stage: untouched}
+
+stored:
+  - {name: "a stored 0 is an untouched stage", raw: 0, stage: untouched}
+  - {name: "a stored 1 is a started stage", raw: 1, stage: started}
+  - {name: "a stored 2 is a complete stage", raw: 2, stage: complete}
+  - {name: "a stored value a newer build may have written is refused, not a crash", raw: 3, unknown: true}
+  - {name: "a negative stored value is refused", raw: -1, unknown: true}

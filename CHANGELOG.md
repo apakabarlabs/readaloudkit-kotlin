@@ -9,7 +9,8 @@
   the same names, held to the same shared cases: the passage and its words, the check
   of a spoken attempt and the recogniser quirks it applies, narration alignment and
   timelines, verse layout, staged-reading progress, and the playback and waveform
-  envelopes.
+  envelopes. `StageState.stored` throws `UnknownStageState` for a stored value this
+  build cannot read, and the caller decides what to show.
 - `PublishedAlignment.decode` reads an alignment as the server publishes it,
   `{"version": ..., "alignment": {...}}`, and `RecognizerQuirks.decode(data, build)`
   reads the hearing table published for one recogniser build,
