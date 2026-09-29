@@ -7,7 +7,8 @@ package fm.apakabar.readaloudkit
  * without spaces needs another tokenizer rather than a different set of marks.
  *
  * A character, as Unicode clusters it, is a letter or a space by its base: the
- * code point its combining marks sit on, past any sign prepended to it.
+ * code point its combining marks sit on, past any sign prepended to it. A private-use
+ * character is never a letter, whatever a font draws for it.
  *
  * @property interiorMarks Code points that remain part of a word after the word has begun.
  */

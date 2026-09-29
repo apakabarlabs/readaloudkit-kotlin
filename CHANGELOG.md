@@ -35,7 +35,8 @@
   and depends on nothing beyond it; on Android the same classes answer from the
   platform's ICU.
 - A character is a letter or a space by its base, the code point its combining marks
-  sit on, past any sign prepended to it, as readaloudkit-swift 0.3.0 decides it.
+  sit on, past any sign prepended to it, as readaloudkit-swift 0.3.0 decides it. A
+  private-use character, in any plane and under any combining mark, is no letter.
 - Built on [readalign-kotlin](https://github.com/apakabarlabs/readalign-kotlin)
   0.17.1, as the Swift library is built on readalign-swift 0.17.
 - Where Kotlin cannot tell two Swift overloads apart by their argument labels, the

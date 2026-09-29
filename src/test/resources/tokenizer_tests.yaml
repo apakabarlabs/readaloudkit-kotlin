@@ -77,6 +77,18 @@ words:
     line: "ab̈, cd"
     words: ["ab̈", "cd"]
 
+  - name: "a private-use character is not a letter"
+    line: "ab\uE000cd"
+    words: ["ab", "cd"]
+
+  - name: "a private-use character beyond the basic plane is not a letter"
+    line: "ab\U000F0000cd \U0010FFFD"
+    words: ["ab", "cd"]
+
+  - name: "a private-use character under a combining mark is not a letter"
+    line: "ab \uE000\u0301cd"
+    words: ["ab", "cd"]
+
   - name: "a combining mark with no letter under it is not a letter"
     line: "̈ab"
     words: ["ab"]
