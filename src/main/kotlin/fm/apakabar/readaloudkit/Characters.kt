@@ -25,11 +25,16 @@ internal fun characterAt(
     offset: Int,
 ): String = text.substring(offset, bounds[bounds.binarySearch(offset) + 1])
 
-private val WHITE_SPACE = Regex("""\p{IsWhite_Space}""")
+private const val CHARACTER_TABULATION = 0x09
+private const val CARRIAGE_RETURN = 0x0D
+private const val NEXT_LINE = 0x85
 
 internal fun isLetter(character: String): Boolean = Character.isAlphabetic(base(character))
 
-internal fun isWhitespace(character: String): Boolean = WHITE_SPACE.matches(Character.toString(base(character)))
+internal fun isWhitespace(character: String): Boolean {
+    val base = base(character)
+    return Character.isSpaceChar(base) || base in CHARACTER_TABULATION..CARRIAGE_RETURN || base == NEXT_LINE
+}
 
 private fun base(character: String): Int {
     val first = character.codePointAt(0)

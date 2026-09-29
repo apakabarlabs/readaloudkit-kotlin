@@ -33,7 +33,8 @@ queries the word or line at a playback position.
 ## Preserve the printed page
 
 `WordTokenizer` returns words and drawable `LineSegment` values without losing
-punctuation or spacing. `VerseLayoutPlanner` chooses turnovers for all lines
+punctuation or spacing. Where a character ends and whether it is a letter follow the
+Unicode data of the platform the code runs on. `VerseLayoutPlanner` chooses turnovers for all lines
 together so one awkward line does not determine the page by itself.
 
 ## Track a staged reading

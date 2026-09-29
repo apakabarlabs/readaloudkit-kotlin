@@ -14,7 +14,7 @@ not a comparison, and a rule that lives in two places drifts: the phone clears a
 line the server holds, and nobody can say which is right.
 
 This is a Kotlin/JVM port of [readaloudkit-swift](https://github.com/apakabarlabs/readaloudkit-swift),
-with the same names and behaviour. It is built on
+with the same names, held to the same shared cases. It is built on
 [readalign-kotlin](https://github.com/apakabarlabs/readalign-kotlin), as the Swift
 library is built on readalign-swift.
 
@@ -48,6 +48,11 @@ A written word nothing was heard for is left out of `SpokenWords.check(...).matc
 altogether, so comparing how many matches were faithful with how many there were
 does not show that every word was said; `isComplete` does.
 
+Where a character ends and whether it is a letter follow the Unicode data of the
+platform the code runs on: the JDK's own tables on the JVM, the system's ICU on Android.
+Two runtimes of different ages can cut a character Unicode has since changed in
+different places, and nothing here promises otherwise.
+
 Every Kotlin example in this README is code the tests run, and a test fails when one is
 not.
 
@@ -74,8 +79,8 @@ dependencies {
 }
 ```
 
-It runs on Java 21 or later, whose `java.text.BreakIterator` splits text into the same
-characters as Swift does, and needs no other library for it.
+It runs on Java 21 or later, whose `java.text.BreakIterator` splits text into extended
+grapheme clusters, and needs no other library for it.
 
 The API is not settled before 1.0 and may change between minor versions.
 

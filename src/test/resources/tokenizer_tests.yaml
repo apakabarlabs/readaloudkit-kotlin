@@ -1,5 +1,10 @@
 # How a printed line is cut into the words a reader says, and into drawable segments.
 #
+# Characters and letters follow the Unicode data of the platform a port runs on, and
+# no two runtimes are promised the same. So the cases use only characters whose
+# clustering and letter properties have not changed since Unicode 10, the oldest data
+# a port meets.
+#
 # Every case names the `interior_marks` a word of its language may hold once it has
 # begun, since no language is assumed: `""` where the language has none.
 #
@@ -74,11 +79,6 @@ words:
     line: "র‍্যাব এল"
     interior_marks: ""
     words: ["র‍্যাব", "এল"]
-
-  - name: "an emoji skin-tone modifier after a letter stays with that letter"
-    line: "ok\U0001F3FDay"
-    interior_marks: "'’-"
-    words: ["ok\U0001F3FDay"]
 
   - name: "an emoji with its modifier after a word is not part of the word"
     line: "go\U0001F44D\U0001F3FD on"
@@ -172,6 +172,22 @@ segments:
     interior_marks: "'’-"
     segments:
       - {index: 0, word: "go", closing: "\U0001F44D\U0001F3FD", space: " "}
+      - {index: 1, word: "on"}
+
+  - name: "no-break, ideographic and next-line spaces are spaces"
+    line: "go\u00A0on\u3000up\u0085in"
+    interior_marks: "'’-"
+    segments:
+      - {index: 0, word: "go", space: "\u00A0"}
+      - {index: 1, word: "on", space: "\u3000"}
+      - {index: 2, word: "up", space: "\u0085"}
+      - {index: 3, word: "in"}
+
+  - name: "an information separator is a mark, not a space"
+    line: "go\u001C on"
+    interior_marks: "'’-"
+    segments:
+      - {index: 0, word: "go", closing: "\u001C", space: " "}
       - {index: 1, word: "on"}
 
   - name: "a sign prepended to a space is a space by its base"

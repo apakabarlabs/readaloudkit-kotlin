@@ -10,6 +10,10 @@ package fm.apakabar.readaloudkit
  * code point its combining marks sit on, past any sign prepended to it. A private-use
  * character is never a letter, whatever a font draws for it.
  *
+ * Where a character ends and whether it is a letter follow the Unicode data of the
+ * runtime, the JDK's or Android's, so an older runtime can cut a newer character
+ * differently.
+ *
  * @property interiorMarks Code points that remain part of a word after the word has begun.
  */
 class WordTokenizer(
