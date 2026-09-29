@@ -1,8 +1,10 @@
 # Supplied word times: how an alignment is read, and how it is married to a passage.
 #
-# `decode` cases read `json` as a server would publish it. A case that decodes pins
-# the whole alignment; `malformed` says the JSON has another shape or type than the
-# alignment's; `timing_error` names the first word whose times cannot stand, by its
+# `decode` cases read the document the server publishes, `{"version": ...,
+# "alignment": {...}}`: from `served`, a file beside this one fetched from the server
+# by `make served`, or from `json`. A case that decodes pins the whole document in
+# `published`; `malformed` says the JSON has another shape or type than the
+# document's; `timing_error` names the first word whose times cannot stand, by its
 # `kind`, its index in `word` and its printed `line`.
 #
 # `timings` cases marry `words` to the passage of `lines`, split by a tokenizer that
@@ -11,94 +13,226 @@
 # `word_count_mismatch` or `word_mismatch`, with every field the error carries.
 decode:
   - name: "the alignment a server publishes is read as it is served"
-    json: '{"piece": "18", "duration": 4.5, "recording": "narration-018.mp3", "words": [{"line": 0, "text": "Shall", "start": 0.5, "end": 0.8}, {"line": 0, "text": "I", "start": 0.8, "end": 0.9}]}'
-    alignment:
-      piece: "18"
-      duration: 4.5
-      recording: "narration-018.mp3"
-      words:
-        - {line: 0, text: "Shall", start: 0.5, end: 0.8}
-        - {line: 0, text: "I", start: 0.8, end: 0.9}
+    served: "served_alignment.json"
+    published:
+      version: "5e1a02bf14932232"
+      alignment:
+        piece: "18"
+        duration: 42.312
+        recording: "d5affa7fe8b15cc4"
+        words:
+          - {line: 0, text: "Shall", start: 0, end: 0.32}
+          - {line: 0, text: "I", start: 0.32, end: 0.56}
+          - {line: 0, text: "compare", start: 0.56, end: 0.88}
+          - {line: 0, text: "thee", start: 0.88, end: 1.2}
+          - {line: 0, text: "to", start: 1.2, end: 1.36}
+          - {line: 0, text: "a", start: 1.36, end: 1.52}
+          - {line: 0, text: "summer’s", start: 1.52, end: 2.08}
+          - {line: 0, text: "day", start: 2.08, end: 2.8}
+          - {line: 1, text: "Thou", start: 2.8000000000000003, end: 3.2800000000000002}
+          - {line: 1, text: "art", start: 3.2800000000000002, end: 3.52}
+          - {line: 1, text: "more", start: 3.52, end: 3.7600000000000002}
+          - {line: 1, text: "lovely", start: 3.7600000000000002, end: 4.32}
+          - {line: 1, text: "and", start: 4.32, end: 4.48}
+          - {line: 1, text: "more", start: 4.48, end: 4.72}
+          - {line: 1, text: "temperate", start: 4.72, end: 5.6000000000000005}
+          - {line: 2, text: "Rough", start: 5.6000000000000005, end: 6}
+          - {line: 2, text: "winds", start: 6, end: 6.4}
+          - {line: 2, text: "do", start: 6.4, end: 6.640000000000001}
+          - {line: 2, text: "shake", start: 6.640000000000001, end: 6.96}
+          - {line: 2, text: "the", start: 6.96, end: 7.12}
+          - {line: 2, text: "darling", start: 7.12, end: 7.6000000000000005}
+          - {line: 2, text: "buds", start: 7.6000000000000005, end: 7.92}
+          - {line: 2, text: "of", start: 7.92, end: 8.08}
+          - {line: 2, text: "May", start: 8.08, end: 8.48}
+          - {line: 3, text: "And", start: 8.48, end: 8.72}
+          - {line: 3, text: "summer’s", start: 8.72, end: 9.200000000000001}
+          - {line: 3, text: "lease", start: 9.200000000000001, end: 9.6}
+          - {line: 3, text: "hath", start: 9.6, end: 9.92}
+          - {line: 3, text: "all", start: 9.92, end: 10.08}
+          - {line: 3, text: "too", start: 10.08, end: 10.32}
+          - {line: 3, text: "short", start: 10.32, end: 10.64}
+          - {line: 3, text: "a", start: 10.64, end: 10.8}
+          - {line: 3, text: "date", start: 10.8, end: 11.1}
+          - {line: 4, text: "Sometime", start: 11.64, end: 12.28}
+          - {line: 4, text: "too", start: 12.28, end: 12.6}
+          - {line: 4, text: "hot", start: 12.6, end: 12.92}
+          - {line: 4, text: "the", start: 12.92, end: 13.08}
+          - {line: 4, text: "eye", start: 13.08, end: 13.239999999999998}
+          - {line: 4, text: "of", start: 13.239999999999998, end: 13.399999999999999}
+          - {line: 4, text: "heaven", start: 13.399999999999999, end: 13.8}
+          - {line: 4, text: "shines", start: 13.8, end: 14.52}
+          - {line: 5, text: "And", start: 14.52, end: 14.76}
+          - {line: 5, text: "often", start: 14.76, end: 15.08}
+          - {line: 5, text: "is", start: 15.08, end: 15.32}
+          - {line: 5, text: "his", start: 15.32, end: 15.48}
+          - {line: 5, text: "gold", start: 15.48, end: 15.879999999999999}
+          - {line: 5, text: "complexion", start: 15.879999999999999, end: 16.52}
+          - {line: 5, text: "dimm’d", start: 16.52, end: 17.240000000000002}
+          - {line: 6, text: "And", start: 17.240000000000002, end: 17.4}
+          - {line: 6, text: "every", start: 17.4, end: 17.8}
+          - {line: 6, text: "fair", start: 17.8, end: 18.2}
+          - {line: 6, text: "from", start: 18.2, end: 18.439999999999998}
+          - {line: 6, text: "fair", start: 18.439999999999998, end: 18.759999999999998}
+          - {line: 6, text: "sometime", start: 18.759999999999998, end: 19.240000000000002}
+          - {line: 6, text: "declines", start: 19.240000000000002, end: 20.18}
+          - {line: 7, text: "By", start: 20.189999999999998, end: 20.509999999999998}
+          - {line: 7, text: "chance", start: 20.509999999999998, end: 20.92}
+          - {line: 7, text: "or", start: 21.07, end: 21.3}
+          - {line: 7, text: "nature’s", start: 21.31, end: 21.79}
+          - {line: 7, text: "changing", start: 21.79, end: 22.349999999999998}
+          - {line: 7, text: "course", start: 22.349999999999998, end: 22.75}
+          - {line: 7, text: "untrimm’d", start: 22.75, end: 23.79}
+          - {line: 8, text: "But", start: 23.79, end: 24.029999999999998}
+          - {line: 8, text: "thy", start: 24.029999999999998, end: 24.349999999999998}
+          - {line: 8, text: "eternal", start: 24.349999999999998, end: 24.83}
+          - {line: 8, text: "summer", start: 24.83, end: 25.22}
+          - {line: 8, text: "shall", start: 25.229999999999997, end: 25.47}
+          - {line: 8, text: "not", start: 25.47, end: 25.71}
+          - {line: 8, text: "fade", start: 25.71, end: 26.39}
+          - {line: 9, text: "Nor", start: 26.39, end: 26.71}
+          - {line: 9, text: "lose", start: 26.71, end: 27.03}
+          - {line: 9, text: "possession", start: 27.03, end: 27.51}
+          - {line: 9, text: "of", start: 27.51, end: 27.59}
+          - {line: 9, text: "that", start: 27.59, end: 27.83}
+          - {line: 9, text: "fair", start: 27.83, end: 28.23}
+          - {line: 9, text: "thou", start: 28.23, end: 28.47}
+          - {line: 9, text: "ow’st", start: 28.47, end: 29.27}
+          - {line: 10, text: "Nor", start: 29.27, end: 29.59}
+          - {line: 10, text: "shall", start: 29.59, end: 29.83}
+          - {line: 10, text: "death", start: 29.83, end: 30.23}
+          - {line: 10, text: "brag", start: 30.23, end: 30.71}
+          - {line: 10, text: "thou", start: 30.71, end: 30.87}
+          - {line: 10, text: "wander’st", start: 30.87, end: 31.5}
+          - {line: 10, text: "in", start: 31.509999999999998, end: 31.67}
+          - {line: 10, text: "his", start: 31.67, end: 31.91}
+          - {line: 10, text: "shade", start: 31.91, end: 32.47}
+          - {line: 11, text: "When", start: 32.47, end: 32.79}
+          - {line: 11, text: "in", start: 32.79, end: 33.03}
+          - {line: 11, text: "eternal", start: 33.03, end: 33.67}
+          - {line: 11, text: "lines", start: 33.67, end: 33.99}
+          - {line: 11, text: "to", start: 33.99, end: 34.14}
+          - {line: 11, text: "time", start: 34.230000000000004, end: 34.47}
+          - {line: 11, text: "thou", start: 34.47, end: 34.71}
+          - {line: 11, text: "grow’st", start: 34.71, end: 35.81}
+          - {line: 12, text: "So", start: 35.81, end: 36.050000000000004}
+          - {line: 12, text: "long", start: 36.050000000000004, end: 36.290000000000006}
+          - {line: 12, text: "as", start: 36.290000000000006, end: 36.53}
+          - {line: 12, text: "men", start: 36.53, end: 36.77}
+          - {line: 12, text: "can", start: 36.77, end: 37.010000000000005}
+          - {line: 12, text: "breathe", start: 37.010000000000005, end: 37.410000000000004}
+          - {line: 12, text: "or", start: 37.410000000000004, end: 37.650000000000006}
+          - {line: 12, text: "eyes", start: 37.650000000000006, end: 38.050000000000004}
+          - {line: 12, text: "can", start: 38.050000000000004, end: 38.370000000000005}
+          - {line: 12, text: "see", start: 38.370000000000005, end: 39.010000000000005}
+          - {line: 13, text: "So", start: 39.010000000000005, end: 39.25}
+          - {line: 13, text: "long", start: 39.25, end: 39.57}
+          - {line: 13, text: "lives", start: 39.57, end: 40.050000000000004}
+          - {line: 13, text: "this", start: 40.050000000000004, end: 40.53}
+          - {line: 13, text: "and", start: 40.53, end: 40.77}
+          - {line: 13, text: "this", start: 40.77, end: 41.010000000000005}
+          - {line: 13, text: "gives", start: 41.010000000000005, end: 41.330000000000005}
+          - {line: 13, text: "life", start: 41.330000000000005, end: 41.57000000000001}
+          - {line: 13, text: "to", start: 41.57000000000001, end: 41.730000000000004}
+          - {line: 13, text: "thee", start: 41.730000000000004, end: 42.312}
 
   - name: "an alignment without a recording is read without one"
-    json: '{"piece": "1", "duration": 2, "words": [{"line": 0, "text": "O", "start": 0, "end": 0.4}]}'
-    alignment:
-      piece: "1"
-      duration: 2
-      words:
-        - {line: 0, text: "O", start: 0, end: 0.4}
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 2, "words": [{"line": 0, "text": "O", "start": 0, "end": 0.4}]}}'
+    published:
+      version: "v1"
+      alignment:
+        piece: "1"
+        duration: 2
+        words:
+          - {line: 0, text: "O", start: 0, end: 0.4}
 
   - name: "words that start together and take no time are in order"
-    json: '{"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": 0.5, "end": 0.5}, {"line": 1, "text": "b", "start": 0.5, "end": 0.5}]}'
-    alignment:
-      piece: "1"
-      duration: 1
-      words:
-        - {line: 0, text: "a", start: 0.5, end: 0.5}
-        - {line: 1, text: "b", start: 0.5, end: 0.5}
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": 0.5, "end": 0.5}, {"line": 1, "text": "b", "start": 0.5, "end": 0.5}]}}'
+    published:
+      version: "v1"
+      alignment:
+        piece: "1"
+        duration: 1
+        words:
+          - {line: 0, text: "a", start: 0.5, end: 0.5}
+          - {line: 1, text: "b", start: 0.5, end: 0.5}
+
+  - name: "a bare alignment, which no server publishes, is refused"
+    json: '{"piece": "1", "duration": 1, "words": []}'
+    malformed: true
+
+  - name: "a document without its version is refused"
+    json: '{"alignment": {"piece": "1", "duration": 1, "words": []}}'
+    malformed: true
+
+  - name: "a field the published document does not have is refused, not skipped"
+    json: '{"version": "v1", "reading": "shakespeare", "alignment": {"piece": "1", "duration": 1, "words": []}}'
+    malformed: true
 
   - name: "a piece named by a number rather than a string is refused"
-    json: '{"piece": 18, "duration": 4.5, "words": []}'
+    json: '{"version": "v1", "alignment": {"piece": 18, "duration": 4.5, "words": []}}'
     malformed: true
 
   - name: "a duration written as a string is refused"
-    json: '{"piece": "18", "duration": "4.5", "words": []}'
+    json: '{"version": "v1", "alignment": {"piece": "18", "duration": "4.5", "words": []}}'
     malformed: true
 
   - name: "a line written as a string is refused"
-    json: '{"piece": "1", "duration": 1, "words": [{"line": "0", "text": "a", "start": 0, "end": 0.1}]}'
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": [{"line": "0", "text": "a", "start": 0, "end": 0.1}]}}'
     malformed: true
 
   - name: "a line with a fraction is refused"
-    json: '{"piece": "1", "duration": 1, "words": [{"line": 0.5, "text": "a", "start": 0, "end": 0.1}]}'
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": [{"line": 0.5, "text": "a", "start": 0, "end": 0.1}]}}'
     malformed: true
 
   - name: "a line written with a decimal point but no fraction is that line"
-    json: '{"piece": "1", "duration": 1, "words": [{"line": 1.0, "text": "a", "start": 0, "end": 0.1}]}'
-    alignment:
-      piece: "1"
-      duration: 1
-      words:
-        - {line: 1, text: "a", start: 0, end: 0.1}
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": [{"line": 1.0, "text": "a", "start": 0, "end": 0.1}]}}'
+    published:
+      version: "v1"
+      alignment:
+        piece: "1"
+        duration: 1
+        words:
+          - {line: 1, text: "a", start: 0, end: 0.1}
 
   - name: "a word time written as a string is refused"
-    json: '{"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": "0", "end": 0.1}]}'
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": "0", "end": 0.1}]}}'
     malformed: true
 
   - name: "an alignment without its words is refused"
-    json: '{"piece": "1", "duration": 1}'
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1}}'
     malformed: true
 
   - name: "a piece written as null is refused"
-    json: '{"piece": null, "duration": 1, "words": []}'
+    json: '{"version": "v1", "alignment": {"piece": null, "duration": 1, "words": []}}'
     malformed: true
 
   - name: "a field the alignment does not have is refused, not skipped"
-    json: '{"piece": "18", "sonnet": 18, "duration": 4.5, "words": []}'
+    json: '{"version": "v1", "alignment": {"piece": "18", "sonnet": 18, "duration": 4.5, "words": []}}'
     malformed: true
 
   - name: "a field a word does not have is refused, not skipped"
-    json: '{"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": 0, "end": 0.1, "confidence": 0.9}]}'
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": 0, "end": 0.1, "confidence": 0.9}]}}'
     malformed: true
 
   - name: "a stray field is refused before the times are judged"
-    json: '{"piece": "1", "duration": 1, "speaker": "A", "words": [{"line": 0, "text": "a", "start": -1, "end": 0.1}]}'
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "speaker": "A", "words": [{"line": 0, "text": "a", "start": -1, "end": 0.1}]}}'
     malformed: true
 
   - name: "a word that starts before the recording is refused"
-    json: '{"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": -0.1, "end": 0.1}]}'
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": -0.1, "end": 0.1}]}}'
     timing_error: {kind: negative_start, word: 0, line: 0}
 
   - name: "a word that ends before it starts is refused"
-    json: '{"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": 0, "end": 0.2}, {"line": 0, "text": "b", "start": 0.4, "end": 0.3}]}'
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": 0, "end": 0.2}, {"line": 0, "text": "b", "start": 0.4, "end": 0.3}]}}'
     timing_error: {kind: end_before_start, word: 1, line: 0}
 
   - name: "a word that starts before the one ahead of it on its line is refused"
-    json: '{"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": 0.3, "end": 0.4}, {"line": 0, "text": "b", "start": 0.2, "end": 0.5}]}'
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": 0.3, "end": 0.4}, {"line": 0, "text": "b", "start": 0.2, "end": 0.5}]}}'
     timing_error: {kind: start_before_previous, word: 1, line: 0}
 
   - name: "a word on the next line that starts before the word ahead of it is refused"
-    json: '{"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": 0.3, "end": 0.4}, {"line": 1, "text": "b", "start": 0.1, "end": 0.2}]}'
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": 0.3, "end": 0.4}, {"line": 1, "text": "b", "start": 0.1, "end": 0.2}]}}'
     timing_error: {kind: start_before_previous, word: 1, line: 1}
 
 timings:

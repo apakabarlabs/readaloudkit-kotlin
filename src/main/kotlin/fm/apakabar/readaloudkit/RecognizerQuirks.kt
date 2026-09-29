@@ -14,7 +14,7 @@ import java.nio.charset.CodingErrorAction
 /**
  * Explicit spellings that one recognizer may return for particular written words.
  *
- * Quirks repair a named model's repeatable transcription behavior; they are not
+ * Quirks repair a named build's repeatable transcription behavior; they are not
  * general rules of pronunciation or language.
  */
 class RecognizerQuirks(
@@ -53,15 +53,15 @@ class RecognizerQuirks(
     val isEmpty: Boolean get() = variants.isEmpty()
 
     /**
-     * The requested model has no entry in a decoded quirk table.
+     * A published hearing table belongs to another recognizer build.
      *
-     * @property model Requested model identifier.
-     * @property known Model identifiers present in the table.
+     * @property requested The build the caller asked for.
+     * @property published The build the table was published for.
      */
-    class UnknownModel(
-        val model: String,
-        val known: List<String>,
-    ) : Exception("no patches listed for $model; the table has ${known.sorted().joinToString(", ")}")
+    data class WrongBuild(
+        val requested: String,
+        val published: String,
+    ) : Exception("the hearing table was published for $published, not $requested")
 
     /** Reports whether [heard] is an explicit allowance for [forWritten] after the written word [after]. */
     fun allows(
@@ -86,31 +86,34 @@ class RecognizerQuirks(
             RecognizerQuirks(allowances.mapValues { (_, heard) -> heard.map { Allowance(it) } })
 
         /**
-         * Decodes the allowances for [model], refusing a table that does not name it.
+         * Decodes the hearing table the server publishes for one recognizer build.
          *
-         * The JSON root maps model identifiers to written words. Each written word maps
-         * to an array containing either a heard string or `{ "heard": ..., "after": ... }`.
-         * A pair with any other field is refused, as is a value of another type. Every
-         * model's section is read, so a table malformed anywhere is refused.
+         * The document is `{"build": ..., "version": ..., "words": {written: [allowance]}}`,
+         * each allowance `{"heard": ..., "after": ...}` with `after` optional. Any other
+         * field, shape or type is refused, and so is a table published for another build.
          *
-         * @throws UnknownModel when the table has no section for [model].
+         * @throws WrongBuild when the table was published for another build than [build].
          * @throws SerializationException when [data] is not such a table.
          */
         fun decode(
             data: ByteArray,
-            model: String,
+            build: String,
         ): RecognizerQuirks {
-            val table =
-                objectOf(Json.parseToJsonElement(utf8(data)), "the table").mapValues { (name, section) ->
-                    objectOf(section, name).mapValues { (written, listed) ->
-                        val entries = listed as? JsonArray ?: throw SerializationException("$written in $name is not an array")
-                        entries.map { allowance(it, written) }
-                    }
+            val table = objectOf(Json.parseToJsonElement(utf8(data)), "the hearing table")
+            refuseFields(table, otherThan = TABLE_FIELDS, of = "a published hearing table")
+            val published = string(table["build"], "build") ?: throw SerializationException("the hearing table names no build")
+            string(table["version"], "version") ?: throw SerializationException("the hearing table has no version")
+            val words = objectOf(table["words"] ?: throw SerializationException("the hearing table has no words"), "words")
+            val allowances =
+                words.mapValues { (written, listed) ->
+                    val entries = listed as? JsonArray ?: throw SerializationException("$written is not an array")
+                    entries.map { allowance(it, written) }
                 }
-            val allowances = table[model] ?: throw UnknownModel(model = model, known = table.keys.toList())
+            if (published != build) throw WrongBuild(requested = build, published = published)
             return RecognizerQuirks(allowances)
         }
 
+        private val TABLE_FIELDS = setOf("build", "version", "words")
         private val ALLOWANCE_FIELDS = setOf("heard", "after")
 
         private fun objectOf(
@@ -122,17 +125,12 @@ class RecognizerQuirks(
             element: JsonElement,
             written: String,
         ): Allowance {
-            if (element is JsonObject) {
-                refuseFields(element, otherThan = ALLOWANCE_FIELDS, of = "an allowance for $written")
-                val heard =
-                    string(element["heard"], "heard for $written")
-                        ?: throw SerializationException("an allowance for $written has no heard spelling")
-                return Allowance(heard = heard, after = string(element["after"], "after for $written"))
-            }
+            val fields = element as? JsonObject ?: throw SerializationException("an allowance for $written is not an object")
+            refuseFields(fields, otherThan = ALLOWANCE_FIELDS, of = "an allowance for $written")
             val heard =
-                string(element, "an allowance for $written")
-                    ?: throw SerializationException("an allowance for $written is null")
-            return Allowance(heard = heard)
+                string(fields["heard"], "heard for $written")
+                    ?: throw SerializationException("an allowance for $written has no heard spelling")
+            return Allowance(heard = heard, after = string(fields["after"], "after for $written"))
         }
 
         private fun string(

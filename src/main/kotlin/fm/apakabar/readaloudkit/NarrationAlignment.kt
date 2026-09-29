@@ -7,7 +7,6 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonElement
@@ -167,16 +166,7 @@ data class NarrationAlignment(
         private val ALIGNMENT_FIELDS = setOf("piece", "duration", "words", "recording")
         private val WORD_FIELDS = setOf("line", "text", "start", "end")
 
-        /**
-         * Decodes an alignment from its JSON representation.
-         *
-         * @throws TimingError naming the first word whose times cannot stand.
-         * @throws SerializationException when [data] is not an alignment, or has a field
-         * the alignment or one of its words does not have.
-         */
-        fun decode(data: ByteArray): NarrationAlignment = Json.decodeFromString(serializer(), utf8(data))
-
-        private fun read(element: JsonElement): NarrationAlignment {
+        internal fun read(element: JsonElement): NarrationAlignment {
             val fields = element as? JsonObject ?: throw SerializationException("an alignment is not an object")
             refuseFields(fields, otherThan = ALIGNMENT_FIELDS, of = "an alignment")
             val listed = fields["words"] as? JsonArray ?: throw SerializationException("the alignment has no list of words")
@@ -214,7 +204,7 @@ data class NarrationAlignment(
             }
         }
 
-        private fun string(
+        internal fun string(
             element: JsonElement?,
             name: String,
         ): String? =

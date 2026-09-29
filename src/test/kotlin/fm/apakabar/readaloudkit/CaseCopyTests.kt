@@ -39,7 +39,7 @@ class CaseCopyTests {
 
     @Test
     fun `every case file copied from the leading port is in the list`() {
-        val copied = File("src/test/resources").list { _, name -> name.endsWith(".yaml") }
+        val copied = File("src/test/resources").list { _, name -> name.endsWith(".yaml") || name.endsWith(".json") }
         assertEquals(Cases.shared.sorted(), checkNotNull(copied) { "src/test/resources is not a directory" }.sorted())
     }
 

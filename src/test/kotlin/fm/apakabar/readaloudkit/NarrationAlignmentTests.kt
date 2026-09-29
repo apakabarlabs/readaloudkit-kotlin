@@ -49,13 +49,26 @@ data class ExpectedAlignment(
 }
 
 @Serializable
+data class ExpectedPublished(
+    val version: String,
+    val alignment: ExpectedAlignment,
+) {
+    val published: PublishedAlignment
+        get() = PublishedAlignment(version = version, alignment = alignment.alignment)
+}
+
+@Serializable
 data class DecodeCase(
     val name: String,
-    val json: String,
-    val alignment: ExpectedAlignment? = null,
+    val served: String? = null,
+    val json: String? = null,
+    val published: ExpectedPublished? = null,
     val malformed: Boolean? = null,
     @SerialName("timing_error") val timingError: ExpectedTimingError? = null,
-)
+) {
+    val data: ByteArray
+        get() = served?.let(Cases::bytes) ?: checkNotNull(json) { "$name: a case reads served or json" }.toByteArray()
+}
 
 @Serializable
 data class ExpectedTiming(
@@ -108,18 +121,18 @@ class NarrationAlignmentTests {
     @TestFactory
     fun `reads what a server publishes`(): List<DynamicTest> =
         Cases.tests(AlignmentCases.all.decode, { it.name }) { case ->
-            val data = case.json.toByteArray()
+            val data = case.data
             case.timingError?.let { expected ->
-                assertEquals(expected.error, assertFailsWith<NarrationAlignment.TimingError> { NarrationAlignment.decode(data) })
+                assertEquals(expected.error, assertFailsWith<NarrationAlignment.TimingError> { PublishedAlignment.decode(data) })
                 return@tests
             }
             if (case.malformed == true) {
-                val error = assertFailsWith<SerializationException> { NarrationAlignment.decode(data) }
+                val error = assertFailsWith<SerializationException> { PublishedAlignment.decode(data) }
                 assertFalse(error is NarrationAlignment.TimingError, "$error is a timing error, not another shape")
                 return@tests
             }
-            val expected = checkNotNull(case.alignment) { "a readable case pins the alignment" }
-            assertEquals(expected.alignment, NarrationAlignment.decode(data))
+            val expected = checkNotNull(case.published) { "a readable case pins the document" }
+            assertEquals(expected.published, PublishedAlignment.decode(data))
         }
 
     @TestFactory
@@ -152,9 +165,9 @@ class NarrationAlignmentTests {
                 words = listOf(NarrationAlignment.Word(line = 0, text = "From", start = 0.0, end = 0.3)),
                 recording = "narration-001.mp3",
             )
-        val data = Json.encodeToString(NarrationAlignment.serializer(), original).toByteArray()
+        val json = Json.encodeToString(NarrationAlignment.serializer(), original)
 
-        assertEquals(original, NarrationAlignment.decode(data))
+        assertEquals(original, Json.decodeFromString(NarrationAlignment.serializer(), json))
     }
 
     @Test

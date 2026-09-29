@@ -16,6 +16,8 @@ object Cases {
             "layout_tests.yaml",
             "progress_tests.yaml",
             "quirks_tests.yaml",
+            "served_alignment.json",
+            "served_hearing.json",
             "spoken_words_tests.yaml",
             "timeline_tests.yaml",
             "tokenizer_tests.yaml",

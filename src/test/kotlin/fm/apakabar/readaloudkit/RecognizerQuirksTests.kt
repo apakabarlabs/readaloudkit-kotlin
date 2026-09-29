@@ -27,26 +27,27 @@ data class QuirkQuery(
 )
 
 @Serializable
-data class UnknownModelCase(
-    val model: String,
-    val known: List<String>,
+data class WrongBuildCase(
+    val requested: String,
+    val published: String,
 )
 
 @Serializable
 data class QuirksCase(
     val name: String,
+    val served: String? = null,
     val table: String? = null,
-    val model: String? = null,
+    val build: String? = null,
     val allowances: Map<String, List<YamlNode>>? = null,
-    @SerialName("unknown_model") val unknownModel: UnknownModelCase? = null,
+    @SerialName("wrong_build") val wrongBuild: WrongBuildCase? = null,
     val malformed: Boolean? = null,
     val empty: Boolean? = null,
     val queries: List<QuirkQuery>? = null,
 ) {
     fun quirks(): RecognizerQuirks {
-        val table = table ?: return Cases.quirks(allowances)
-        val model = checkNotNull(model) { "$name: a table is read for a model" }
-        return RecognizerQuirks.decode(table.toByteArray(), model = model)
+        val data = served?.let(Cases::bytes) ?: table?.toByteArray() ?: return Cases.quirks(allowances)
+        val build = checkNotNull(build) { "$name: a table is read for a build" }
+        return RecognizerQuirks.decode(data, build = build)
     }
 }
 
@@ -54,10 +55,11 @@ class RecognizerQuirksTests {
     @TestFactory
     fun `allows what the table says`(): List<DynamicTest> =
         Cases.tests(QuirksCases.all, { it.name }) { case ->
-            case.unknownModel?.let { expected ->
-                val error = assertFailsWith<RecognizerQuirks.UnknownModel> { case.quirks() }
-                assertEquals(expected.model, error.model)
-                assertEquals(expected.known, error.known.sorted())
+            case.wrongBuild?.let { expected ->
+                assertEquals(
+                    RecognizerQuirks.WrongBuild(requested = expected.requested, published = expected.published),
+                    assertFailsWith<RecognizerQuirks.WrongBuild> { case.quirks() },
+                )
                 return@tests
             }
             if (case.malformed == true) {

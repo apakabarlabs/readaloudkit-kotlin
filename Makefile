@@ -54,4 +54,4 @@ publish-check:
 
 sync-yaml:
 	mkdir -p $(TEST_RESOURCES)
-	cp $(SWIFT_DIR)/Tests/ReadAloudKitTests/Resources/*.yaml $(TEST_RESOURCES)/
+	cp $(SWIFT_DIR)/Tests/ReadAloudKitTests/Resources/*.yaml $(SWIFT_DIR)/Tests/ReadAloudKitTests/Resources/*.json $(TEST_RESOURCES)/

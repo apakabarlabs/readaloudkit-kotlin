@@ -20,13 +20,13 @@ val completed = progress.isComplete
 ```
 
 Use `RecognizerQuirks` only for repeatable output of a named recognizer build.
-Quirks are not pronunciation rules and an unknown model is refused rather than
-treated as a model with no quirks.
+Quirks are not pronunciation rules, and a table published for another build is
+refused rather than taken for this one.
 
 ## Map audio to print
 
-`NarrationAlignment` imports word timings supplied with a recording and refuses
-a passage whose words no longer match. `NarrationTimeline` estimates a temporary
+`PublishedAlignment` reads the word timings the server publishes for a recording,
+and `NarrationAlignment` refuses a passage whose words no longer match them. `NarrationTimeline` estimates a temporary
 timeline when no alignment exists, adjusts measured boundaries using audio, and
 queries the word or line at a playback position.
 
