@@ -43,18 +43,48 @@ data class NarrationAlignment(
     /**
      * One word and its supplied interval in the recording, not validated against its bounds.
      *
+     * Read from JSON under any `Json` configuration, it refuses a field the word does not
+     * have, a value of another type than the field's, and a line outside `Int`.
+     *
      * @property line Zero-based index of the printed line containing the word.
      * @property text Printed spelling used when the alignment was produced.
      * @property start Start time in seconds from the beginning of the recording.
      * @property end End time in seconds from the beginning of the recording.
      */
-    @Serializable
+    @Serializable(with = Word.Serializer::class)
     data class Word(
         val line: Int,
         val text: String,
         val start: Double,
         val end: Double,
-    )
+    ) {
+        @Serializable
+        @SerialName("fm.apakabar.readaloudkit.NarrationAlignment.Word")
+        private class Written(
+            val line: Int,
+            val text: String,
+            val start: Double,
+            val end: Double,
+        )
+
+        /** Writes a word as JSON, and reads one only from JSON, strictly. */
+        object Serializer : KSerializer<Word> {
+            override val descriptor: SerialDescriptor = Written.serializer().descriptor
+
+            override fun serialize(
+                encoder: Encoder,
+                value: Word,
+            ) = encoder.encodeSerializableValue(
+                Written.serializer(),
+                Written(line = value.line, text = value.text, start = value.start, end = value.end),
+            )
+
+            override fun deserialize(decoder: Decoder): Word {
+                val json = decoder as? JsonDecoder ?: throw SerializationException("a word is read from JSON")
+                return word(json.decodeJsonElement(), "a word")
+            }
+        }
+    }
 
     /** Supplied word times that cannot describe one recording read in order. */
     sealed class TimingError(
@@ -175,7 +205,7 @@ data class NarrationAlignment(
             val fields = element as? JsonObject ?: throw SerializationException("an alignment is not an object")
             refuseFields(fields, otherThan = ALIGNMENT_FIELDS, of = "an alignment")
             val listed = fields["words"] as? JsonArray ?: throw SerializationException("the alignment has no list of words")
-            val words = listed.mapIndexed { index, word -> word(word, index) }
+            val words = listed.mapIndexed { index, word -> word(word, "word $index") }
             check(words)
             return NarrationAlignment(
                 piece = string(fields["piece"], "piece") ?: throw SerializationException("the alignment names no piece"),
@@ -187,15 +217,15 @@ data class NarrationAlignment(
 
         private fun word(
             element: JsonElement,
-            index: Int,
+            name: String,
         ): Word {
-            val fields = element as? JsonObject ?: throw SerializationException("word $index is not an object")
-            refuseFields(fields, otherThan = WORD_FIELDS, of = "word $index")
+            val fields = element as? JsonObject ?: throw SerializationException("$name is not an object")
+            refuseFields(fields, otherThan = WORD_FIELDS, of = name)
             return Word(
-                line = integer(fields["line"], "line of word $index"),
-                text = string(fields["text"], "text of word $index") ?: throw SerializationException("word $index has no text"),
-                start = number(fields["start"], "start of word $index"),
-                end = number(fields["end"], "end of word $index"),
+                line = integer(fields["line"], "line of $name"),
+                text = string(fields["text"], "text of $name") ?: throw SerializationException("$name has no text"),
+                start = number(fields["start"], "start of $name"),
+                end = number(fields["end"], "end of $name"),
             )
         }
 

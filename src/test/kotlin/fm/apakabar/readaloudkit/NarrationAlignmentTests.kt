@@ -38,14 +38,24 @@ data class ExpectedTimingError(
 }
 
 @Serializable
+data class CaseWord(
+    val line: Int,
+    val text: String,
+    val start: Double,
+    val end: Double,
+) {
+    val word: NarrationAlignment.Word get() = NarrationAlignment.Word(line = line, text = text, start = start, end = end)
+}
+
+@Serializable
 data class ExpectedAlignment(
     val piece: String,
     val duration: Double,
-    val words: List<NarrationAlignment.Word>,
+    val words: List<CaseWord>,
     val recording: String? = null,
 ) {
     val alignment: NarrationAlignment
-        get() = NarrationAlignment(piece = piece, duration = duration, words = words, recording = recording)
+        get() = NarrationAlignment(piece = piece, duration = duration, words = words.map { it.word }, recording = recording)
 }
 
 @Serializable
@@ -98,7 +108,7 @@ data class TimingsCase(
     val name: String,
     val lines: List<String>,
     @SerialName("interior_marks") val interiorMarks: String,
-    val words: List<NarrationAlignment.Word>,
+    val words: List<CaseWord>,
     val timings: List<ExpectedTiming>? = null,
     @SerialName("word_count_mismatch") val wordCountMismatch: CountMismatch? = null,
     @SerialName("word_mismatch") val wordMismatch: WordMismatch? = null,
@@ -138,7 +148,7 @@ class NarrationAlignmentTests {
     @TestFactory
     fun `marries times to words`(): List<DynamicTest> =
         Cases.tests(AlignmentCases.all.timings, { it.name }) { case ->
-            val alignment = NarrationAlignment(piece = "1", duration = 10.0, words = case.words)
+            val alignment = NarrationAlignment(piece = "1", duration = 10.0, words = case.words.map { it.word })
             val passage = Passage(lines = case.lines)
             val tokenizer = Cases.tokenizer(case.interiorMarks)
             val refusal = case.refusal
@@ -168,6 +178,31 @@ class NarrationAlignmentTests {
         val json = Json.encodeToString(NarrationAlignment.serializer(), original)
 
         assertEquals(original, Json.decodeFromString(NarrationAlignment.serializer(), json))
+    }
+
+    @Test
+    fun `a word is read strictly under a lenient Json too`() {
+        val lenient =
+            Json {
+                ignoreUnknownKeys = true
+                isLenient = true
+                coerceInputValues = true
+            }
+        val serializer = NarrationAlignment.Word.serializer()
+
+        assertFailsWith<SerializationException> {
+            lenient.decodeFromString(serializer, """{"line": 0, "text": "a", "start": 0, "end": 0.1, "confidence": 1}""")
+        }
+        assertFailsWith<SerializationException> {
+            lenient.decodeFromString(serializer, """{"line": "0", "text": "a", "start": 0, "end": 0.1}""")
+        }
+        assertFailsWith<SerializationException> {
+            lenient.decodeFromString(serializer, """{"line": 2147483648, "text": "a", "start": 0, "end": 0.1}""")
+        }
+        assertEquals(
+            NarrationAlignment.Word(line = 2, text = "a", start = 0.0, end = 0.1),
+            lenient.decodeFromString(serializer, """{"line": 2, "text": "a", "start": 0, "end": 0.1}"""),
+        )
     }
 
     @Test

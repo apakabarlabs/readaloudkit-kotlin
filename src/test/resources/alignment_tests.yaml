@@ -195,6 +195,24 @@ decode:
         words:
           - {line: 1, text: "a", start: 0, end: 0.1}
 
+  - name: "the last line a 32-bit integer holds is read"
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": [{"line": 2147483647, "text": "a", "start": 0, "end": 0.1}]}}'
+    published:
+      version: "v1"
+      alignment:
+        piece: "1"
+        duration: 1
+        words:
+          - {line: 2147483647, text: "a", start: 0, end: 0.1}
+
+  - name: "a line beyond a 32-bit integer is refused"
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": [{"line": 2147483648, "text": "a", "start": 0, "end": 0.1}]}}'
+    malformed: true
+
+  - name: "a line below a 32-bit integer is refused"
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": [{"line": -2147483649, "text": "a", "start": 0, "end": 0.1}]}}'
+    malformed: true
+
   - name: "a word time written as a string is refused"
     json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": "0", "end": 0.1}]}}'
     malformed: true
