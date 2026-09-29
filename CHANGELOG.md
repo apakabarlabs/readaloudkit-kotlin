@@ -12,7 +12,7 @@ sounds in a recorded narration.
   [readaloudkit-swift](https://github.com/apakabarlabs/readaloudkit-swift) 0.3.0,
   numbered 0.3.0 to match the Swift release it ports. It is published on Maven Central
   as `fm.apakabar:readaloudkit-kotlin`, needs Java 21 or later, and is built on
-  [readalign-kotlin](https://github.com/apakabarlabs/readalign-kotlin) 0.17.1. It gives
+  [readalign-kotlin](https://github.com/apakabarlabs/readalign-kotlin) 0.17.2. It gives
   the answers the Swift library gives, checked against the same shared test cases: the
   passage and its words, the check of a spoken attempt, narration alignment and
   timelines, verse layout, staged-reading progress, and the playback and waveform
