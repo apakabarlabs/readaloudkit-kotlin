@@ -18,7 +18,9 @@
   refuse a field the document does not have, a value of another type than the field
   declares, a word's line outside `Int`, and word times that cannot describe one
   recording read in order, naming the word and its line. `NarrationAlignment.Word` is
-  read as strictly under any `Json` configuration.
+  read as strictly under any `Json` configuration. `NarrationAlignment.timings`
+  compares the alignment's words with the passage's by canonical equivalence, so a
+  letter written with a combining mark matches its precomposed spelling.
 - Nothing picks a language for the caller: the tracker, `wordsPerLine`,
   `NarrationAlignment.timings` and `NarrationTimeline.estimate` take their tokenizer,
   and the estimate and `TranscriptAligner.timings` their weighting. A tokenizer keeps
