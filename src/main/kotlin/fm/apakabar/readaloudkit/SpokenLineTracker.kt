@@ -189,7 +189,7 @@ class SpokenLineTracker(
             elisions: Elisions,
         ): Boolean {
             val said = normalize(heard)
-            return said == normalize(to) || said == elisions.fullForm(of = to)
+            return said == normalize(to) || said in elisions.fullForms(of = to)
         }
     }
 }

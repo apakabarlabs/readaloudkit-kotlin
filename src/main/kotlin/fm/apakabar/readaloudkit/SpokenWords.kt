@@ -49,7 +49,7 @@ object SpokenWords {
                 heard = heard,
                 threshold = threshold,
                 equivalent = { written, said, preceding ->
-                    quirks.allows(said, forWritten = written, after = preceding) || elisions.fullForm(of = written) == normalize(said)
+                    quirks.allows(said, forWritten = written, after = preceding) || normalize(said) in elisions.fullForms(of = written)
                 },
             )
         val faithful = mutableSetOf<Int>()

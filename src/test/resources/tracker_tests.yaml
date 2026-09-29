@@ -2,8 +2,8 @@
 #
 # A case gives the printed `lines`, the `interior_marks` a word of their language may
 # hold, which every case names because no language is assumed, optionally the
-# `elisions` the work lists (elided spelling to the full form it stands for; none when
-# absent), and optionally the `quirks` of the recogniser (written word to heard
+# `elisions` the work lists (elided spelling to the full forms it may stand for; none
+# when absent), and optionally the `quirks` of the recogniser (written word to heard
 # spellings, each a string or a `{heard, after}` pair).
 #
 # Every case pins `line_lengths`. With `heard`, the transcript is checked, and the case
@@ -85,7 +85,7 @@ tests:
   - name: "an elision the recogniser spells out in full counts as said"
     lines: ["Will be a tatter’d weed of small worth held:"]
     interior_marks: "'’-"
-    elisions: {"tatter’d": "tattered"}
+    elisions: {"tatter’d": ["tattered"]}
     line_lengths: [9]
     heard: "will be a tattered weed of small worth held"
     checks: [correct, correct, correct, correct, correct, correct, correct, correct, correct]

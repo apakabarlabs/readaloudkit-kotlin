@@ -18,10 +18,10 @@ import kotlin.test.assertTrue
 @Serializable
 private data class Work(
     @SerialName("interior_marks") val interiorMarks: String,
-    val elisions: Map<String, String>,
+    val elisions: Map<String, List<String>>,
 )
 
-private const val SONNETS = """{"interior_marks": "'’-", "elisions": {"tatter’d": "tattered"}}"""
+private const val SONNETS = """{"interior_marks": "'’-", "elisions": {"tatter’d": ["tattered"]}}"""
 
 class ReadmeTests {
     private fun saidEveryWord(

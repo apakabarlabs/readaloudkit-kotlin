@@ -25,7 +25,7 @@ val completed = progress.isComplete
 ```
 
 `work` stands for the work's data: the marks its script keeps inside a word, and the
-full form of each elided spelling it prints. `WordTokenizer` and `Elisions` hold no
+full forms of each elided spelling it prints. `WordTokenizer` and `Elisions` hold no
 language of their own. `quirks` is passed by name too, here `RecognizerQuirks.none` for
 a recogniser with nothing to patch.
 

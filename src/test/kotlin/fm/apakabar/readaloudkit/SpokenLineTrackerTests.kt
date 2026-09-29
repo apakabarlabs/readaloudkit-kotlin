@@ -28,7 +28,7 @@ data class TrackerCase(
     val lines: List<String>,
     val quirks: Map<String, List<YamlNode>>? = null,
     @SerialName("interior_marks") val interiorMarks: String,
-    val elisions: Map<String, String>? = null,
+    val elisions: Map<String, List<String>>? = null,
     @SerialName("line_lengths") val lineLengths: List<Int>,
     val heard: String? = null,
     val checks: List<WordCheck>? = null,

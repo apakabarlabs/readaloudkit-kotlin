@@ -3,7 +3,7 @@
 # `matches` is every pair the aligner made, in order, each as half-open `[lower, upper)`
 # ranges of expected and heard word indices; `faithful` is the set of match indices
 # accepted. `quirks` maps a written word to heard spellings. `elisions` maps an elided
-# spelling the work prints to the full form it stands for; none when absent.
+# spelling the work prints to the full forms it may stand for; none when absent.
 #
 # `faithful` cases ask whether `heard` faithfully represents `written` given the
 # work's `elisions`.
@@ -25,7 +25,7 @@ tests:
   - name: "an elision spelled out is faithful when the work gives its full form"
     expected: ["tatter’d"]
     heard: ["tattered"]
-    elisions: {"tatter’d": "tattered"}
+    elisions: {"tatter’d": ["tattered"]}
     matches:
       - {expected: [0, 1], heard: [0, 1]}
     faithful: [0]
@@ -40,7 +40,15 @@ tests:
   - name: "a listed full form pairs its elision however unlike they look"
     expected: ["o’er"]
     heard: ["over"]
-    elisions: {"o’er": "over"}
+    elisions: {"o’er": ["over"]}
+    matches:
+      - {expected: [0, 1], heard: [0, 1]}
+    faithful: [0]
+
+  - name: "any of several listed full forms pairs its elision"
+    expected: ["o’er"]
+    heard: ["ore"]
+    elisions: {"o’er": ["over", "ore"]}
     matches:
       - {expected: [0, 1], heard: [0, 1]}
     faithful: [0]
@@ -76,9 +84,13 @@ tests:
 faithful:
   - {name: "a word said as written is faithful whatever the work lists", heard: "Time", written: "time", faithful: true}
   - {name: "a word without an apostrophe is only itself", heard: "time", written: "times", faithful: false}
-  - {name: "a listed elision is restored to its full form", heard: "tattered", written: "tatter’d", elisions: {"tatter’d": "tattered"}, faithful: true}
+  - {name: "a listed elision is restored to its full form", heard: "tattered", written: "tatter’d", elisions: {"tatter’d": ["tattered"]}, faithful: true}
   - {name: "an elision the work does not list is not restored", heard: "tattered", written: "tatter’d", faithful: false}
-  - {name: "a full form stands only for the elision it is listed for", heard: "tattered", written: "tatter’d", elisions: {"crown’d": "crowned"}, faithful: false}
-  - {name: "a keyed apostrophe in the list stands for a typeset one in print", heard: "crowned", written: "crown’d", elisions: {"crown'd": "crowned"}, faithful: true}
-  - {name: "only the listed full form is restored, not another spelling near it", heard: "crownded", written: "crown’d", elisions: {"crown’d": "crowned"}, faithful: false}
-  - {name: "an elision may not be left out", heard: "crown", written: "crown’d", elisions: {"crown’d": "crowned"}, faithful: false}
+  - {name: "a full form stands only for the elision it is listed for", heard: "tattered", written: "tatter’d", elisions: {"crown’d": ["crowned"]}, faithful: false}
+  - {name: "a keyed apostrophe in the list stands for a typeset one in print", heard: "crowned", written: "crown’d", elisions: {"crown'd": ["crowned"]}, faithful: true}
+  - {name: "only a listed full form is restored, not another spelling near it", heard: "crownded", written: "crown’d", elisions: {"crown’d": ["crowned"]}, faithful: false}
+  - {name: "an elision may not be left out", heard: "crown", written: "crown’d", elisions: {"crown’d": ["crowned"]}, faithful: false}
+  - {name: "the first of several full forms counts as said", heard: "over", written: "o’er", elisions: {"o’er": ["over", "ore"]}, faithful: true}
+  - {name: "the last of several full forms counts as said", heard: "ore", written: "o’er", elisions: {"o’er": ["over", "ore"]}, faithful: true}
+  - {name: "a spelling listed twice, keyed and typeset, keeps the full forms of both", heard: "ore", written: "o’er", elisions: {"o’er": ["over"], "O'er": ["ore"]}, faithful: true}
+  - {name: "a spelling listed twice keeps the other entry's full forms too", heard: "over", written: "O’er", elisions: {"o’er": ["over"], "O'er": ["ore"]}, faithful: true}

@@ -38,7 +38,7 @@ data class SpokenWordsCase(
     val expected: List<String>,
     val heard: List<String>,
     val quirks: Map<String, List<YamlNode>>? = null,
-    val elisions: Map<String, String>? = null,
+    val elisions: Map<String, List<String>>? = null,
     val matches: List<ExpectedMatch>,
     val faithful: Set<Int>,
 )
@@ -48,7 +48,7 @@ data class FaithfulCase(
     val name: String,
     val heard: String,
     val written: String,
-    val elisions: Map<String, String>? = null,
+    val elisions: Map<String, List<String>>? = null,
     val faithful: Boolean,
 )
 

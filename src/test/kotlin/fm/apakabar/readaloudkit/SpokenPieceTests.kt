@@ -49,7 +49,7 @@ class SpokenPieceTests {
 
     @Test
     fun `a tracker keeps the elisions it was made with`() {
-        val listed = Elisions(mapOf("tatter’d" to "tattered"))
+        val listed = Elisions(mapOf("tatter’d" to listOf("tattered")))
         val tracker =
             SpokenLineTracker(
                 line = "a tatter’d weed",
