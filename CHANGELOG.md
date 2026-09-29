@@ -4,6 +4,18 @@ ReadAloudKit for Kotlin checks a reading aloud of a printed text against that te
 which written words were said, where in the text the reader is, and when each word
 sounds in a recorded narration.
 
+## 0.3.1
+
+### Changed
+
+- Built for Java 17 instead of Java 21. 0.3.0 could not be added to an Android app or
+  a JVM project on Java 17; 0.3.1 can, with no change to your code. Behaviour on Java 21
+  is the same as 0.3.0's. On a Java 17 JVM, a word held together by a zero-width joiner
+  or non-joiner, as in Persian or Bengali, is split in two, because that JDK's
+  `java.text.BreakIterator` does not keep it whole. On Android, `BreakIterator` is the
+  platform's own, built on the device's ICU, so how such a word is split follows the
+  device rather than a JDK.
+
 ## 0.3.0
 
 ### Added

@@ -93,12 +93,15 @@ repositories {
 }
 
 dependencies {
-    implementation("fm.apakabar:readaloudkit-kotlin:0.3.0")
+    implementation("fm.apakabar:readaloudkit-kotlin:0.3.1")
 }
 ```
 
-It runs on Java 21 or later, whose `java.text.BreakIterator` splits text into extended
-grapheme clusters, and needs no other library for it.
+It is built for Java 17 and runs there, Android included. It splits text into extended
+grapheme clusters with `java.text.BreakIterator` and needs no other library for it. On a
+JVM that class does this correctly from Java 21: on Java 17 a word held together by a
+zero-width joiner or non-joiner, as in Persian or Bengali, comes apart in two. On Android
+the class comes from the platform's ICU rather than from a JDK.
 
 The API is not settled before 1.0 and may change between minor versions.
 
