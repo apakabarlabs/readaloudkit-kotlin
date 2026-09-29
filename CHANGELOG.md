@@ -24,7 +24,9 @@
   `Json` configuration. `NarrationAlignment.timings`
   compares the alignment's words with the passage's by canonical equivalence, so a
   letter written with a combining mark matches its precomposed spelling.
-- Nothing picks a language for the caller: the tracker, `wordsPerLine`,
+- Nothing picks a recogniser's quirks or a language for the caller: the tracker takes
+  its quirks with no default, `RecognizerQuirks.none` passed by name, and the tracker,
+  `wordsPerLine`,
   `NarrationAlignment.timings` and `NarrationTimeline.estimate` take their tokenizer,
   and the estimate and `TranscriptAligner.timings` their weighting. A tokenizer keeps
   inside a word the marks the work's data names, `WordTokenizer(interiorMarks = ...)`,

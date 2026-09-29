@@ -63,19 +63,22 @@ data class WordAttempt(
  * The whole transcript is aligned at once so one misrecognized word does not shift
  * every word that follows it.
  *
+ * [quirks], [elisions] and [tokenizer] have no default: each comes from the
+ * recogniser's or the work's data, and `RecognizerQuirks.none` is passed by name.
+ *
  * @property quirks Model-specific transcription allowances applied while checking.
  * @property elisions The full forms of the elided spellings the work prints, from the work's data.
  * @property tokenizer Splits both the printed lines and every transcript checked against them.
  */
 class SpokenLineTracker(
     lines: List<String>,
-    val quirks: RecognizerQuirks = RecognizerQuirks.none,
+    val quirks: RecognizerQuirks,
     val elisions: Elisions,
     val tokenizer: WordTokenizer,
 ) {
     constructor(
         line: String,
-        quirks: RecognizerQuirks = RecognizerQuirks.none,
+        quirks: RecognizerQuirks,
         elisions: Elisions,
         tokenizer: WordTokenizer,
     ) : this(listOf(line), quirks, elisions, tokenizer)

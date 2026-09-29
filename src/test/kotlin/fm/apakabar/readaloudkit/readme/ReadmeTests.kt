@@ -43,6 +43,7 @@ class ReadmeTests {
         val tracker =
             SpokenLineTracker(
                 lines = listOf("Will be a tatter’d weed", "of small worth held"),
+                quirks = RecognizerQuirks.none,
                 elisions = elisions,
                 tokenizer = tokenizer,
             )
