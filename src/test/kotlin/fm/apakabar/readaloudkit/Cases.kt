@@ -47,6 +47,10 @@ object Cases {
 
     fun tokenizer(interiorMarks: String): WordTokenizer = WordTokenizer(interiorMarks)
 
+    val sonnetsTokenizer = tokenizer("'’-")
+
+    fun elisions(fullForms: Map<String, String>?): Elisions = fullForms?.let(::Elisions) ?: Elisions.none
+
     fun quirks(allowances: Map<String, List<YamlNode>>?): RecognizerQuirks =
         allowances?.let { table -> RecognizerQuirks(table.mapValues { (written, entries) -> entries.map { allowance(it, written) } }) }
             ?: RecognizerQuirks.none

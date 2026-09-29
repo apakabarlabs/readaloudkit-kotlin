@@ -14,7 +14,8 @@ package fm.apakabar.readaloudkit
  * runtime, the JDK's or Android's, so an older runtime can cut a newer character
  * differently.
  *
- * @property interiorMarks Code points that remain part of a word after the word has begun.
+ * @property interiorMarks Code points that remain part of a word after the word has begun,
+ * the marks the work's data names for its script, such as an apostrophe or a hyphen.
  */
 class WordTokenizer(
     val interiorMarks: Set<Int>,
@@ -160,10 +161,5 @@ class WordTokenizer(
             end = previous
         }
         return range.first until bounds[end]
-    }
-
-    companion object {
-        /** A Latin-script tokenizer that preserves apostrophes, elisions, and hyphens. */
-        val latinScript = WordTokenizer(interiorMarks = "'’-")
     }
 }

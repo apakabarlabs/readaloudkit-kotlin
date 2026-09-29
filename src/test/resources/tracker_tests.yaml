@@ -1,9 +1,10 @@
 # What a SpokenLineTracker makes of one transcript read against printed lines.
 #
 # A case gives the printed `lines`, the `interior_marks` a word of their language may
-# hold, which every case names because no language is assumed, and optionally the
-# `quirks` of the recogniser (written word to heard spellings, each a string or a
-# `{heard, after}` pair).
+# hold, which every case names because no language is assumed, optionally the
+# `elisions` the work lists (elided spelling to the full form it stands for; none when
+# absent), and optionally the `quirks` of the recogniser (written word to heard
+# spellings, each a string or a `{heard, after}` pair).
 #
 # Every case pins `line_lengths`. With `heard`, the transcript is checked, and the case
 # pins the whole result: every word's check in `checks`, `complete` and `all_wrong`.
@@ -84,10 +85,20 @@ tests:
   - name: "an elision the recogniser spells out in full counts as said"
     lines: ["Will be a tatter’d weed of small worth held:"]
     interior_marks: "'’-"
+    elisions: {"tatter’d": "tattered"}
     line_lengths: [9]
     heard: "will be a tattered weed of small worth held"
     checks: [correct, correct, correct, correct, correct, correct, correct, correct, correct]
     complete: true
+    all_wrong: false
+
+  - name: "an elision the work does not list is not restored by any rule of the library"
+    lines: ["Will be a tatter’d weed of small worth held:"]
+    interior_marks: "'’-"
+    line_lengths: [9]
+    heard: "will be a tattered weed of small worth held"
+    checks: [correct, correct, correct, close, correct, correct, correct, correct, correct]
+    complete: false
     all_wrong: false
 
   - name: "a word patched for this recogniser passes as though it had been heard right"

@@ -2,6 +2,7 @@ package fm.apakabar.readaloudkit
 
 import fm.apakabar.readalign.TranscriptAligner
 import fm.apakabar.readalign.WordMatch
+import fm.apakabar.readalign.normalize
 
 /** Decides whether recognized words faithfully represent the printed words. */
 object SpokenWords {
@@ -32,12 +33,14 @@ object SpokenWords {
      * Aligns heard words with expected words and applies explicit recognizer quirks.
      *
      * [threshold] decides which words may be compared; acceptance still requires a
-     * faithful spelling or an explicit quirk.
+     * faithful spelling, the full form [elisions] gives for an elided one, or an explicit
+     * quirk. A listed full form or quirk also pairs its words however unlike they look.
      */
     fun check(
         expected: List<String>,
         heard: List<String>,
         quirks: RecognizerQuirks,
+        elisions: Elisions,
         threshold: Double = SpokenLineTracker.closeSimilarityThreshold,
     ): Check {
         val matches =
@@ -45,14 +48,16 @@ object SpokenWords {
                 expected = expected,
                 heard = heard,
                 threshold = threshold,
-                equivalent = { written, said, preceding -> quirks.allows(said, forWritten = written, after = preceding) },
+                equivalent = { written, said, preceding ->
+                    quirks.allows(said, forWritten = written, after = preceding) || elisions.fullForm(of = written) == normalize(said)
+                },
             )
         val faithful = mutableSetOf<Int>()
         for ((index, match) in matches.withIndex()) {
             val said = match.heard.joinToString("") { heard[it] }
             val written = match.expected.joinToString("") { expected[it] }
             val before = if (match.expected.first > 0) expected[match.expected.first - 1] else null
-            if (SpokenLineTracker.isFaithful(said, to = written) ||
+            if (SpokenLineTracker.isFaithful(said, to = written, elisions = elisions) ||
                 quirks.allows(said, forWritten = written, after = before)
             ) {
                 faithful.add(index)

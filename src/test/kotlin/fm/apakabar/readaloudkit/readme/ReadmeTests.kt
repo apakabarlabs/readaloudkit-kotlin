@@ -1,20 +1,35 @@
 package fm.apakabar.readaloudkit.readme
 
+import fm.apakabar.readaloudkit.Elisions
 import fm.apakabar.readaloudkit.RecognizerQuirks
 import fm.apakabar.readaloudkit.SpokenLineTracker
 import fm.apakabar.readaloudkit.WordTokenizer
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Test
 import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+@Serializable
+private data class Work(
+    @SerialName("interior_marks") val interiorMarks: String,
+    val elisions: Map<String, String>,
+)
+
+private const val SONNETS = """{"interior_marks": "'’-", "elisions": {"tatter’d": "tattered"}}"""
+
 class ReadmeTests {
     private fun saidEveryWord(
         lines: List<String>,
         transcript: String,
     ): Boolean {
-        val tracker = SpokenLineTracker(lines = lines, quirks = RecognizerQuirks.none, tokenizer = WordTokenizer.latinScript)
+        val work = Json.decodeFromString(Work.serializer(), SONNETS)
+        val tokenizer = WordTokenizer(interiorMarks = work.interiorMarks)
+        val elisions = Elisions(fullForms = work.elisions)
+        val tracker = SpokenLineTracker(lines = lines, quirks = RecognizerQuirks.none, elisions = elisions, tokenizer = tokenizer)
         val saidEveryWord = tracker.progress(heard = transcript).isComplete
         return saidEveryWord
     }
@@ -48,10 +63,10 @@ class ReadmeTests {
 
     @Test
     fun `the README's completeness check tells a dropped word from a reading said whole`() {
-        val lines = listOf("From fairest creatures", "we desire increase")
+        val lines = listOf("Will be a tatter’d weed", "of small worth held")
 
-        assertTrue(saidEveryWord(lines, "From fairest creatures we desire increase"))
-        assertFalse(saidEveryWord(lines, "From fairest creatures desire increase"))
+        assertTrue(saidEveryWord(lines, "will be a tattered weed of small worth held"))
+        assertFalse(saidEveryWord(lines, "will be a tattered weed of worth held"))
     }
 
     private fun trimmedLines(text: String): List<String> = text.lines().map { it.trim() }

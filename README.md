@@ -32,17 +32,21 @@ library is built on readalign-swift.
 ## Use
 
 ```kotlin
+import fm.apakabar.readaloudkit.Elisions
 import fm.apakabar.readaloudkit.RecognizerQuirks
 import fm.apakabar.readaloudkit.SpokenLineTracker
 import fm.apakabar.readaloudkit.WordTokenizer
 
-val tracker = SpokenLineTracker(lines = lines, quirks = RecognizerQuirks.none, tokenizer = WordTokenizer.latinScript)
+val tokenizer = WordTokenizer(interiorMarks = work.interiorMarks)
+val elisions = Elisions(fullForms = work.elisions)
+val tracker = SpokenLineTracker(lines = lines, quirks = RecognizerQuirks.none, elisions = elisions, tokenizer = tokenizer)
 val saidEveryWord = tracker.progress(heard = transcript).isComplete
 ```
 
-The tokenizer is the language's: `WordTokenizer.latinScript` keeps apostrophes and
-hyphens inside a word, and a text in another script passes its own. Nothing here picks
-one for you.
+`work` stands for the data that comes with the work, not with this library: the marks
+its script keeps inside a word, such as an apostrophe or a hyphen, and the full form of
+each elided spelling it prints, such as `tattered` for `tatter’d`. Nothing here knows a
+language or picks one for you, and an elision the work does not list is not restored.
 
 A written word nothing was heard for is left out of `SpokenWords.check(...).matches`
 altogether, so comparing how many matches were faithful with how many there were

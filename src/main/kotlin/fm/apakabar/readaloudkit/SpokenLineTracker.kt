@@ -64,18 +64,21 @@ data class WordAttempt(
  * every word that follows it.
  *
  * @property quirks Model-specific transcription allowances applied while checking.
+ * @property elisions The full forms of the elided spellings the work prints, from the work's data.
  * @property tokenizer Splits both the printed lines and every transcript checked against them.
  */
 class SpokenLineTracker(
     lines: List<String>,
     val quirks: RecognizerQuirks = RecognizerQuirks.none,
+    val elisions: Elisions,
     val tokenizer: WordTokenizer,
 ) {
     constructor(
         line: String,
         quirks: RecognizerQuirks = RecognizerQuirks.none,
+        elisions: Elisions,
         tokenizer: WordTokenizer,
-    ) : this(listOf(line), quirks, tokenizer)
+    ) : this(listOf(line), quirks, elisions, tokenizer)
 
     /**
      * The result for every expected word in one attempt.
@@ -130,7 +133,7 @@ class SpokenLineTracker(
      */
     fun progress(heard: String): Progress {
         val said = tokenizer.wordRanges(heard).map { heard.substring(it) }
-        val checked = SpokenWords.check(expected = expected, heard = said, quirks = quirks)
+        val checked = SpokenWords.check(expected = expected, heard = said, quirks = quirks, elisions = elisions)
         val checks = MutableList(expected.size) { WordCheck.WRONG }
         for ((index, match) in checked.matches.withIndex()) {
             val check = if (index in checked.faithful) WordCheck.CORRECT else WordCheck.CLOSE
@@ -174,37 +177,16 @@ class SpokenLineTracker(
         /**
          * Reports whether a heard spelling faithfully represents a written word.
          *
-         * Case and punctuation are ignored. A vowel omitted at an apostrophe may be
-         * restored, but other changes remain different words.
+         * Case and punctuation are ignored. An elided spelling also counts as said when
+         * the heard word is the full form [elisions] gives for it; nothing else is restored.
          */
         fun isFaithful(
             heard: String,
             to: String,
+            elisions: Elisions,
         ): Boolean {
             val said = normalize(heard)
-            return said == normalize(to) || writesOut(said, elidedIn = to)
-        }
-
-        private fun writesOut(
-            said: String,
-            elidedIn: String,
-        ): Boolean {
-            val parts = elidedIn.split('’', '\'').map(::normalize)
-            if (parts.size <= 1) return false
-
-            val vowels = characters("aeiou")
-            val lettersAnApostropheMayStandFor = 1..2
-            var rest = characters(said)
-            for ((index, part) in parts.withIndex()) {
-                val spelled = characters(part)
-                if (rest.take(spelled.size) != spelled) return false
-                rest = rest.drop(spelled.size)
-                if (index >= parts.size - 1) break
-                val restored = rest.takeWhile { it in vowels }
-                if (restored.size !in lettersAnApostropheMayStandFor) return false
-                rest = rest.drop(restored.size)
-            }
-            return rest.isEmpty()
+            return said == normalize(to) || said == elisions.fullForm(of = to)
         }
     }
 }

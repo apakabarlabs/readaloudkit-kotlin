@@ -2,7 +2,11 @@
 #
 # `matches` is every pair the aligner made, in order, each as half-open `[lower, upper)`
 # ranges of expected and heard word indices; `faithful` is the set of match indices
-# accepted. `quirks` maps a written word to heard spellings.
+# accepted. `quirks` maps a written word to heard spellings. `elisions` maps an elided
+# spelling the work prints to the full form it stands for; none when absent.
+#
+# `faithful` cases ask whether `heard` faithfully represents `written` given the
+# work's `elisions`.
 tests:
   - name: "a word said as written is faithful"
     expected: ["love"]
@@ -18,9 +22,25 @@ tests:
       - {expected: [0, 1], heard: [0, 1]}
     faithful: []
 
-  - name: "an elision spelled out is faithful without a patch"
+  - name: "an elision spelled out is faithful when the work gives its full form"
     expected: ["tatter’d"]
     heard: ["tattered"]
+    elisions: {"tatter’d": "tattered"}
+    matches:
+      - {expected: [0, 1], heard: [0, 1]}
+    faithful: [0]
+
+  - name: "an elision spelled out is paired but not faithful when the work lists none"
+    expected: ["tatter’d"]
+    heard: ["tattered"]
+    matches:
+      - {expected: [0, 1], heard: [0, 1]}
+    faithful: []
+
+  - name: "a listed full form pairs its elision however unlike they look"
+    expected: ["o’er"]
+    heard: ["over"]
+    elisions: {"o’er": "over"}
     matches:
       - {expected: [0, 1], heard: [0, 1]}
     faithful: [0]
@@ -54,12 +74,11 @@ tests:
     faithful: [0]
 
 faithful:
-  - {name: "print elides a letter and the recogniser writes it back", heard: "tattered", written: "tatter’d", faithful: true}
-  - {name: "a restored vowel before a final consonant", heard: "crowned", written: "crown’d", faithful: true}
-  - {name: "a restored vowel inside an ending", heard: "bestowest", written: "bestow’st", faithful: true}
-  - {name: "a restored vowel after a vowel", heard: "beguiled", written: "beguil’d", faithful: true}
-  - {name: "a restored vowel at the end of the word", heard: "the", written: "th’", faithful: true}
-  - {name: "a consonant may not be written back", heard: "whatever", written: "whate’er", faithful: false}
-  - {name: "a vowel may not be written back away from the apostrophe", heard: "loves", written: "lov’st", faithful: false}
-  - {name: "an elision may not be left out", heard: "crown", written: "crown’d", faithful: false}
+  - {name: "a word said as written is faithful whatever the work lists", heard: "Time", written: "time", faithful: true}
   - {name: "a word without an apostrophe is only itself", heard: "time", written: "times", faithful: false}
+  - {name: "a listed elision is restored to its full form", heard: "tattered", written: "tatter’d", elisions: {"tatter’d": "tattered"}, faithful: true}
+  - {name: "an elision the work does not list is not restored", heard: "tattered", written: "tatter’d", faithful: false}
+  - {name: "a full form stands only for the elision it is listed for", heard: "tattered", written: "tatter’d", elisions: {"crown’d": "crowned"}, faithful: false}
+  - {name: "a keyed apostrophe in the list stands for a typeset one in print", heard: "crowned", written: "crown’d", elisions: {"crown'd": "crowned"}, faithful: true}
+  - {name: "only the listed full form is restored, not another spelling near it", heard: "crownded", written: "crown’d", elisions: {"crown’d": "crowned"}, faithful: false}
+  - {name: "an elision may not be left out", heard: "crown", written: "crown’d", elisions: {"crown’d": "crowned"}, faithful: false}

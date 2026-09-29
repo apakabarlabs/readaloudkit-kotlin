@@ -28,6 +28,7 @@ data class TrackerCase(
     val lines: List<String>,
     val quirks: Map<String, List<YamlNode>>? = null,
     @SerialName("interior_marks") val interiorMarks: String,
+    val elisions: Map<String, String>? = null,
     @SerialName("line_lengths") val lineLengths: List<Int>,
     val heard: String? = null,
     val checks: List<WordCheck>? = null,
@@ -37,7 +38,13 @@ data class TrackerCase(
     val untried: List<String>? = null,
 ) {
     val tracker: SpokenLineTracker
-        get() = SpokenLineTracker(lines = lines, quirks = Cases.quirks(quirks), tokenizer = Cases.tokenizer(interiorMarks))
+        get() =
+            SpokenLineTracker(
+                lines = lines,
+                quirks = Cases.quirks(quirks),
+                elisions = Cases.elisions(elisions),
+                tokenizer = Cases.tokenizer(interiorMarks),
+            )
 }
 
 class SpokenLineTrackerTests {

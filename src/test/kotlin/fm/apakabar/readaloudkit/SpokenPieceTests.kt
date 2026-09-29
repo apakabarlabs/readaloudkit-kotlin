@@ -16,7 +16,7 @@ class SpokenPieceTests {
 
     @Test
     fun `the states come back apart line by line`() {
-        val tracker = SpokenLineTracker(lines = quatrain, tokenizer = WordTokenizer.latinScript)
+        val tracker = SpokenLineTracker(lines = quatrain, elisions = Elisions.none, tokenizer = Cases.sonnetsTokenizer)
         val progress = tracker.progress(heard = quatrain.joinToString(" "))
         val states = progress.wordStates
 
@@ -36,8 +36,16 @@ class SpokenPieceTests {
     @Test
     fun `a tracker keeps the tokenizer it was made with`() {
         val plain = WordTokenizer(interiorMarks = "-")
-        val tracker = SpokenLineTracker(line = "beauty's rose", tokenizer = plain)
+        val tracker = SpokenLineTracker(line = "beauty's rose", elisions = Elisions.none, tokenizer = plain)
 
         assertSame(plain, tracker.tokenizer)
+    }
+
+    @Test
+    fun `a tracker keeps the elisions it was made with`() {
+        val listed = Elisions(mapOf("tatter’d" to "tattered"))
+        val tracker = SpokenLineTracker(line = "a tatter’d weed", elisions = listed, tokenizer = Cases.sonnetsTokenizer)
+
+        assertSame(listed, tracker.elisions)
     }
 }

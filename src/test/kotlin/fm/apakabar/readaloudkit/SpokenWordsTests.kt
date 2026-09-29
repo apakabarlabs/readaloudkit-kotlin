@@ -38,6 +38,7 @@ data class SpokenWordsCase(
     val expected: List<String>,
     val heard: List<String>,
     val quirks: Map<String, List<YamlNode>>? = null,
+    val elisions: Map<String, String>? = null,
     val matches: List<ExpectedMatch>,
     val faithful: Set<Int>,
 )
@@ -47,6 +48,7 @@ data class FaithfulCase(
     val name: String,
     val heard: String,
     val written: String,
+    val elisions: Map<String, String>? = null,
     val faithful: Boolean,
 )
 
@@ -54,7 +56,13 @@ class SpokenWordsTests {
     @TestFactory
     fun `accepts only faithful words`(): List<DynamicTest> =
         Cases.tests(SpokenWordsCases.all.tests, { it.name }) { case ->
-            val checked = SpokenWords.check(expected = case.expected, heard = case.heard, quirks = Cases.quirks(case.quirks))
+            val checked =
+                SpokenWords.check(
+                    expected = case.expected,
+                    heard = case.heard,
+                    quirks = Cases.quirks(case.quirks),
+                    elisions = Cases.elisions(case.elisions),
+                )
 
             assertEquals(case.matches, checked.matches.map(ExpectedMatch::of))
             assertEquals(case.faithful, checked.faithful)
@@ -63,19 +71,28 @@ class SpokenWordsTests {
     @TestFactory
     fun `tells a faithful spelling`(): List<DynamicTest> =
         Cases.tests(SpokenWordsCases.all.faithful, { it.name }) { case ->
-            assertEquals(case.faithful, SpokenLineTracker.isFaithful(case.heard, to = case.written))
+            val elisions = Cases.elisions(case.elisions)
+
+            assertEquals(case.faithful, SpokenLineTracker.isFaithful(case.heard, to = case.written, elisions = elisions))
         }
 
     @Test
     fun `the reader's word checks are that same pass`() {
         val quirks = RecognizerQuirks(allowances = mapOf("heir" to listOf("air"), "O" to listOf("oh")))
-        val tracker = SpokenLineTracker(line = "O heir of love", quirks = quirks, tokenizer = WordTokenizer.latinScript)
+        val tracker =
+            SpokenLineTracker(
+                line = "O heir of love",
+                quirks = quirks,
+                elisions = Elisions.none,
+                tokenizer = Cases.sonnetsTokenizer,
+            )
         val progress = tracker.progress(heard = "oh air of dove")
         val checked =
             SpokenWords.check(
                 expected = listOf("O", "heir", "of", "love"),
                 heard = listOf("oh", "air", "of", "dove"),
                 quirks = quirks,
+                elisions = Elisions.none,
             )
         val faithful = progress.checks.indices.filter { progress.checks[it] == WordCheck.CORRECT }
         val byCheck =

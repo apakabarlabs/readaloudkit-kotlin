@@ -21,8 +21,11 @@
   read as strictly under any `Json` configuration.
 - Nothing picks a language for the caller: the tracker, `wordsPerLine`,
   `NarrationAlignment.timings` and `NarrationTimeline.estimate` take their tokenizer,
-  and the estimate and `TranscriptAligner.timings` their weighting.
-  `WordTokenizer.latinScript` is there to be passed by name.
+  and the estimate and `TranscriptAligner.timings` their weighting. A tokenizer keeps
+  inside a word the marks the work's data names, `WordTokenizer(interiorMarks = ...)`,
+  and an elided spelling counts as said only when the heard word is the full form the
+  work's data gives for it, passed as `Elisions` to the tracker, `SpokenWords.check` and
+  `SpokenLineTracker.isFaithful`.
 - Words are cut at the user-perceived characters `java.text.BreakIterator` finds, so
   the library needs Java 21 and no other library for it. A character is a letter or a
   space by its base, the code point its combining marks sit on, past any sign prepended

@@ -73,7 +73,7 @@ data class HoldCase(
     val marked: List<WordTiming>
         get() {
             val line = List(spans.size) { "word" }.joinToString(" ")
-            val words = WordTokenizer.latinScript.words(Passage(lines = listOf(line)))
+            val words = Cases.sonnetsTokenizer.words(Passage(lines = listOf(line)))
             return words.zip(spans) { word, span -> WordTiming(word = word, start = span[0], end = span[1]) }
         }
 }
@@ -95,7 +95,7 @@ class NarrationTimelineTests {
             NarrationTimeline.estimate(
                 passage,
                 duration = duration,
-                tokenizer = WordTokenizer.latinScript,
+                tokenizer = Cases.sonnetsTokenizer,
                 weighting = EnglishSyllableWeighting(),
             )
 
@@ -120,7 +120,7 @@ class NarrationTimelineTests {
     @Test
     fun `every word gets a timing inside the recording`() {
         val estimated = timings
-        assertEquals(WordTokenizer.latinScript.words(passage).size, estimated.size)
+        assertEquals(Cases.sonnetsTokenizer.words(passage).size, estimated.size)
 
         val first = assertNotNull(estimated.firstOrNull())
         val last = assertNotNull(estimated.lastOrNull())
@@ -139,7 +139,7 @@ class NarrationTimelineTests {
     @Test
     fun `the narrator breathes at the line end`() {
         val estimated = timings
-        val firstLineCount = WordTokenizer.latinScript.wordRanges(passage.lines[0]).size
+        val firstLineCount = Cases.sonnetsTokenizer.wordRanges(passage.lines[0]).size
         val acrossBreak = estimated[firstLineCount].start - estimated[firstLineCount - 1].end
         val insideLine = estimated[1].start - estimated[0].end
 
@@ -158,7 +158,7 @@ class NarrationTimelineTests {
     @Test
     fun `a weighting that treats every word alike splits the time evenly`() {
         val estimated =
-            NarrationTimeline.estimate(passage, duration = duration, tokenizer = WordTokenizer.latinScript, weighting = EvenWeighting())
+            NarrationTimeline.estimate(passage, duration = duration, tokenizer = Cases.sonnetsTokenizer, weighting = EvenWeighting())
         val first = assertNotNull(estimated.firstOrNull())
         val last = assertNotNull(estimated.lastOrNull())
 
@@ -226,7 +226,7 @@ class NarrationTimelineTests {
             NarrationTimeline.estimate(
                 passage,
                 duration = 0.0,
-                tokenizer = WordTokenizer.latinScript,
+                tokenizer = Cases.sonnetsTokenizer,
                 weighting = EnglishSyllableWeighting(),
             )
 
