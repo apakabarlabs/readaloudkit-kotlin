@@ -70,6 +70,9 @@ dependencies {
 }
 ```
 
+It runs on Java 21 or later, whose `java.text.BreakIterator` splits text into the same
+characters as Swift does, and needs no other library for it.
+
 The API is not settled before 1.0 and may change between minor versions.
 
 ## Documentation

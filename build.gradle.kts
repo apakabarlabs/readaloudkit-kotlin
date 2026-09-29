@@ -22,7 +22,6 @@ version =
 dependencies {
     api("fm.apakabar:readalign-kotlin:0.17.1")
     api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
-    implementation("com.ibm.icu:icu4j:78.3")
 
     testImplementation("io.heapy.kotaml:kotaml:0.110.0")
     testImplementation(kotlin("test"))
@@ -34,7 +33,7 @@ tasks.test {
 }
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(21)
 }
 
 dokka {

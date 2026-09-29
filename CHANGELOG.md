@@ -28,9 +28,12 @@
   `NarrationAlignment.timings` and `NarrationTimeline.estimate` take their tokenizer,
   and the estimate and `TranscriptAligner.timings` their weighting.
   `WordTokenizer.latinScript` is there to be passed by name.
-- Words are cut at the user-perceived characters of Unicode, taken from ICU4J, so a
-  zero-width joiner or non-joiner, a conjunct or an emoji modifier falls where it does
-  in the Swift library.
+- Words are cut at the user-perceived characters of Unicode, taken from
+  `java.text.BreakIterator`, so a zero-width joiner or non-joiner, a conjunct or an
+  emoji modifier falls where it does in the Swift library. That needs the extended
+  grapheme clusters the JDK splits at from Java 20, so the library is built for Java 21
+  and depends on nothing beyond it; on Android the same classes answer from the
+  platform's ICU.
 - Built on [readalign-kotlin](https://github.com/apakabarlabs/readalign-kotlin)
   0.17.1, as the Swift library is built on readalign-swift 0.17.
 - Where Kotlin cannot tell two Swift overloads apart by their argument labels, the
