@@ -75,6 +75,19 @@ class ReadmeTests {
         }
 
     @Test
+    fun `the CHANGELOG shows no Kotlin a test does not run`() {
+        val source = File(SOURCE).readLines()
+        val bodies = DOCUMENTS.map { (_, runBy) -> checkNotNull(body(of = runBy, source)) }
+
+        for (paragraph in fencedBlocks(File("CHANGELOG.md").readText(), language = "kotlin").flatMap(::paragraphs)) {
+            assertTrue(
+                bodies.any { it.windowed(paragraph.size).contains(paragraph) },
+                "CHANGELOG.md shows code no test runs:\n${paragraph.joinToString("\n")}",
+            )
+        }
+    }
+
+    @Test
     fun `the README installs the version the CHANGELOG releases`() {
         val released = checkNotNull(RELEASED.find(File("CHANGELOG.md").readText())) { "CHANGELOG.md names no version" }
         val installed =
