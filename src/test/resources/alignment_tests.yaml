@@ -3,7 +3,7 @@
 # `decode` cases read the document the server publishes, `{"version": ...,
 # "alignment": {...}}`: from `served`, a file beside this one fetched from the server
 # by `make served`, or from `json`, written in `encoding`: `utf-8` when absent,
-# `utf-8-bom`, `utf-16le`, `utf-16le-bom`, `utf-16be` or `latin-1`. A field the document
+# `utf-8-bom`, `utf-8-bom-twice`, `utf-16le`, `utf-16le-bom`, `utf-16be` or `latin-1`. A field the document
 # does not know is read past, since a build in a store cannot learn a field the server
 # adds later. A case that decodes pins the whole document in `published`; `not_utf8`
 # says the bytes are not UTF-8 text; `malformed` says the JSON lacks a field or has
@@ -184,6 +184,45 @@ decode:
     json: '{"version": "v1", "alignment": {"piece": "é", "duration": 1, "words": []}}'
     encoding: "latin-1"
     not_utf8: true
+
+  - name: "a second byte order mark is not JSON and is refused"
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": []}}'
+    encoding: "utf-8-bom-twice"
+    malformed: true
+
+  - name: "a lone surrogate escaped in a string is refused"
+    json: '{"version": "v1", "alignment": {"piece": "\ud800", "duration": 1, "words": []}}'
+    malformed: true
+
+  - name: "a lone surrogate escaped in a field the document does not know is refused too"
+    json: '{"version": "v1", "note": "\udc00", "alignment": {"piece": "1", "duration": 1, "words": []}}'
+    malformed: true
+
+  - name: "a surrogate pair escaped in a string is one character"
+    json: '{"version": "v1", "alignment": {"piece": "\ud834\udd1e", "duration": 1, "words": []}}'
+    published:
+      version: "v1"
+      alignment:
+        piece: "\U0001D11E"
+        duration: 1
+        words: []
+
+  - name: "a control character written raw inside a string is refused"
+    json: "{\"version\": \"v\x01\", \"alignment\": {\"piece\": \"1\", \"duration\": 1, \"words\": []}}"
+    malformed: true
+
+  - name: "a tab written raw inside a string is refused"
+    json: "{\"version\": \"v\t1\", \"alignment\": {\"piece\": \"1\", \"duration\": 1, \"words\": []}}"
+    malformed: true
+
+  - name: "a tab and a line break between tokens are only white space"
+    json: "{\"version\":\t\"v1\",\n\"alignment\": {\"piece\": \"1\", \"duration\": 1, \"words\": []}}"
+    published:
+      version: "v1"
+      alignment:
+        piece: "1"
+        duration: 1
+        words: []
 
   - name: "a bare alignment, which no server publishes, is refused"
     json: '{"piece": "1", "duration": 1, "words": []}'

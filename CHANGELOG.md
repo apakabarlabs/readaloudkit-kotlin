@@ -22,7 +22,10 @@
   within one object keeps one of its values; which one is not promised and may differ
   from the Swift library. `NarrationAlignment.Word` is read the same way under any
   `Json` configuration. Both documents are read as UTF-8, with or without a byte order
-  mark, and text in any other encoding is refused with `NotUTF8`. `NarrationAlignment.timings`
+  mark, and text in any other encoding is refused with `NotUTF8`. A second byte order
+  mark, a lone surrogate escaped in any string, and a control character written raw
+  inside a string are refused with a `SerializationException`, as JSON forbids them.
+  `NarrationAlignment.timings`
   compares the alignment's words with the passage's by canonical equivalence, so a
   letter written with a combining mark matches its precomposed spelling.
 - Nothing picks a recogniser's quirks or a language for the caller: the tracker takes

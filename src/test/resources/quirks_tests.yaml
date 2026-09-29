@@ -45,6 +45,22 @@ tests:
     queries:
       - {heard: "and", written: "in", allowed: true}
 
+  - name: "a second byte order mark before a table is refused"
+    table: '{"build": "parakeet", "version": "v1", "words": {}}'
+    encoding: "utf-8-bom-twice"
+    build: "parakeet"
+    malformed: true
+
+  - name: "a lone surrogate escaped in a heard spelling is refused"
+    table: '{"build": "parakeet", "version": "v1", "words": {"in": [{"heard": "\ud800"}]}}'
+    build: "parakeet"
+    malformed: true
+
+  - name: "a control character written raw in a heard spelling is refused"
+    table: "{\"build\": \"parakeet\", \"version\": \"v1\", \"words\": {\"in\": [{\"heard\": \"a\x7Fnd\x1F\"}]}}"
+    build: "parakeet"
+    malformed: true
+
   - name: "a table in UTF-16 is refused as not UTF-8"
     table: '{"build": "parakeet", "version": "v1", "words": {}}'
     encoding: "utf-16le-bom"

@@ -40,6 +40,7 @@ object Cases {
         when (encoding ?: "utf-8") {
             "utf-8" -> text.toByteArray(Charsets.UTF_8)
             "utf-8-bom" -> UTF8_BYTE_ORDER_MARK + text.toByteArray(Charsets.UTF_8)
+            "utf-8-bom-twice" -> UTF8_BYTE_ORDER_MARK + UTF8_BYTE_ORDER_MARK + text.toByteArray(Charsets.UTF_8)
             "utf-16le" -> text.toByteArray(Charsets.UTF_16LE)
             "utf-16le-bom" -> UTF16_LITTLE_ENDIAN_BYTE_ORDER_MARK + text.toByteArray(Charsets.UTF_16LE)
             "utf-16be" -> text.toByteArray(Charsets.UTF_16BE)
