@@ -2,13 +2,16 @@
 #
 # A case reads the table the server publishes for one recogniser build, `{"build": ...,
 # "version": ..., "words": {written: [{"heard": ..., "after": ...}]}}`, from `served`, a
-# file beside this one fetched by `make served`, or from `table`, asking for `build`.
-# Or it gives `allowances` directly: written word to heard spellings, each a string or a
+# file beside this one fetched by `make served`, or from `table` written in `encoding`
+# (as in alignment_tests.yaml; `utf-8` when absent), asking for `build`. Or it gives
+# `allowances` directly: written word to heard spellings, each a string or a
 # `{heard, after}` pair. A table published for another build is refused with
-# `wrong_build`, the build asked for and the one published; a table that lacks a field
-# or has another shape or type is refused as `malformed`, while a field it does not know
-# is read past, since a build in a store cannot learn a field the server adds later. Otherwise `empty` says whether any substitution is allowed,
-# and each query asks whether `heard` is allowed for `written`, after `after` if given.
+# `wrong_build`, the build asked for and the one published; bytes that are not UTF-8
+# text with `not_utf8`; a table that lacks a field or has another shape or type as
+# `malformed`, while a field it does not know is read past, since a build in a store
+# cannot learn a field the server adds later. Otherwise `empty` says whether any
+# substitution is allowed, and each query asks whether `heard` is allowed for
+# `written`, after `after` if given.
 tests:
   - name: "a build's hearing table is read as it is served"
     served: "served_hearing.json"
@@ -33,6 +36,20 @@ tests:
     empty: true
     queries:
       - {heard: "tattered", written: "tatter''d", allowed: false}
+
+  - name: "a table in UTF-8 behind a byte order mark is read"
+    table: '{"build": "parakeet", "version": "v1", "words": {"in": [{"heard": "and"}]}}'
+    encoding: "utf-8-bom"
+    build: "parakeet"
+    empty: false
+    queries:
+      - {heard: "and", written: "in", allowed: true}
+
+  - name: "a table in UTF-16 is refused as not UTF-8"
+    table: '{"build": "parakeet", "version": "v1", "words": {}}'
+    encoding: "utf-16le-bom"
+    build: "parakeet"
+    not_utf8: true
 
   - name: "a table without its version is refused"
     table: '{"build": "parakeet", "words": {}}'

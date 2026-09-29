@@ -72,12 +72,14 @@ data class DecodeCase(
     val name: String,
     val served: String? = null,
     val json: String? = null,
+    val encoding: String? = null,
     val published: ExpectedPublished? = null,
     val malformed: Boolean? = null,
+    @SerialName("not_utf8") val notUTF8: Boolean? = null,
     @SerialName("timing_error") val timingError: ExpectedTimingError? = null,
 ) {
     val data: ByteArray
-        get() = served?.let(Cases::bytes) ?: checkNotNull(json) { "$name: a case reads served or json" }.toByteArray()
+        get() = served?.let(Cases::bytes) ?: Cases.bytes(checkNotNull(json) { "$name: a case reads served or json" }, encoding)
 }
 
 @Serializable
@@ -138,6 +140,10 @@ class NarrationAlignmentTests {
             }
             if (case.malformed == true) {
                 assertFailsWith<SerializationException> { PublishedAlignment.decode(data) }
+                return@tests
+            }
+            if (case.notUTF8 == true) {
+                assertFailsWith<NotUTF8> { PublishedAlignment.decode(data) }
                 return@tests
             }
             val expected = checkNotNull(case.published) { "a readable case pins the document" }

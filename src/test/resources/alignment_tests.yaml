@@ -2,11 +2,13 @@
 #
 # `decode` cases read the document the server publishes, `{"version": ...,
 # "alignment": {...}}`: from `served`, a file beside this one fetched from the server
-# by `make served`, or from `json`. A field the document does not know is read past,
-# since a build in a store cannot learn a field the server adds later. A case that
-# decodes pins the whole document in `published`; `malformed` says the JSON lacks a
-# field or has another shape or type than the document's; `timing_error` names the first word whose times cannot stand, by its
-# `kind`, its index in `word` and its printed `line`.
+# by `make served`, or from `json`, written in `encoding`: `utf-8` when absent,
+# `utf-8-bom`, `utf-16le`, `utf-16le-bom`, `utf-16be` or `latin-1`. A field the document
+# does not know is read past, since a build in a store cannot learn a field the server
+# adds later. A case that decodes pins the whole document in `published`; `not_utf8`
+# says the bytes are not UTF-8 text; `malformed` says the JSON lacks a field or has
+# another shape or type than the document's; `timing_error` names the first word whose
+# times cannot stand, by its `kind`, its index in `word` and its printed `line`.
 #
 # `timings` cases marry `words` to the passage of `lines`, split by a tokenizer that
 # keeps the `interior_marks` of their language, which every such case names. A case
@@ -157,6 +159,31 @@ decode:
         words:
           - {line: 0, text: "a", start: 0.5, end: 0.5}
           - {line: 1, text: "b", start: 0.5, end: 0.5}
+
+  - name: "a document in UTF-8 behind a byte order mark is read"
+    json: '{"version": "v1", "alignment": {"piece": "é", "duration": 1, "words": []}}'
+    encoding: "utf-8-bom"
+    published:
+      version: "v1"
+      alignment:
+        piece: "é"
+        duration: 1
+        words: []
+
+  - name: "a document in UTF-16 behind its byte order mark is refused as not UTF-8"
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": []}}'
+    encoding: "utf-16le-bom"
+    not_utf8: true
+
+  - name: "a document in UTF-16 without a byte order mark is refused as not UTF-8"
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": []}}'
+    encoding: "utf-16be"
+    not_utf8: true
+
+  - name: "a document in Latin-1 is refused as not UTF-8"
+    json: '{"version": "v1", "alignment": {"piece": "é", "duration": 1, "words": []}}'
+    encoding: "latin-1"
+    not_utf8: true
 
   - name: "a bare alignment, which no server publishes, is refused"
     json: '{"piece": "1", "duration": 1, "words": []}'

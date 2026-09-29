@@ -30,6 +30,23 @@ object Cases {
             "$name is missing: run `make sync-yaml`"
         }.use { it.readBytes() }
 
+    private val UTF8_BYTE_ORDER_MARK = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
+    private val UTF16_LITTLE_ENDIAN_BYTE_ORDER_MARK = byteArrayOf(0xFF.toByte(), 0xFE.toByte())
+
+    fun bytes(
+        text: String,
+        encoding: String?,
+    ): ByteArray =
+        when (encoding ?: "utf-8") {
+            "utf-8" -> text.toByteArray(Charsets.UTF_8)
+            "utf-8-bom" -> UTF8_BYTE_ORDER_MARK + text.toByteArray(Charsets.UTF_8)
+            "utf-16le" -> text.toByteArray(Charsets.UTF_16LE)
+            "utf-16le-bom" -> UTF16_LITTLE_ENDIAN_BYTE_ORDER_MARK + text.toByteArray(Charsets.UTF_16LE)
+            "utf-16be" -> text.toByteArray(Charsets.UTF_16BE)
+            "latin-1" -> text.toByteArray(Charsets.ISO_8859_1)
+            else -> error("$encoding is not an encoding the cases name")
+        }
+
     fun <T> load(
         name: String,
         serializer: KSerializer<T>,

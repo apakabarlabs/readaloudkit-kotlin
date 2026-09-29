@@ -37,15 +37,17 @@ data class QuirksCase(
     val name: String,
     val served: String? = null,
     val table: String? = null,
+    val encoding: String? = null,
     val build: String? = null,
     val allowances: Map<String, List<YamlNode>>? = null,
     @SerialName("wrong_build") val wrongBuild: WrongBuildCase? = null,
     val malformed: Boolean? = null,
+    @SerialName("not_utf8") val notUTF8: Boolean? = null,
     val empty: Boolean? = null,
     val queries: List<QuirkQuery>? = null,
 ) {
     fun quirks(): RecognizerQuirks {
-        val data = served?.let(Cases::bytes) ?: table?.toByteArray() ?: return Cases.quirks(allowances)
+        val data = served?.let(Cases::bytes) ?: table?.let { Cases.bytes(it, encoding) } ?: return Cases.quirks(allowances)
         val build = checkNotNull(build) { "$name: a table is read for a build" }
         return RecognizerQuirks.decode(data, build = build)
     }
@@ -64,6 +66,10 @@ class RecognizerQuirksTests {
             }
             if (case.malformed == true) {
                 assertFailsWith<SerializationException> { case.quirks() }
+                return@tests
+            }
+            if (case.notUTF8 == true) {
+                assertFailsWith<NotUTF8> { case.quirks() }
                 return@tests
             }
             val quirks = case.quirks()

@@ -22,8 +22,10 @@ data class PublishedAlignment(
          * A missing field or a value of another type is refused. A field the document does
          * not know is read past, at any depth, so that a field the server adds later does
          * not stop a build already installed. A key repeated within one object keeps one of
-         * its values; which one is not promised and may differ between ports.
+         * its values; which one is not promised and may differ between ports. The document
+         * is read as UTF-8, with or without a byte order mark.
          *
+         * @throws NotUTF8 when [data] is text in another encoding.
          * @throws NarrationAlignment.TimingError naming the first word whose times cannot stand.
          * @throws SerializationException when [data] is not such a document.
          */

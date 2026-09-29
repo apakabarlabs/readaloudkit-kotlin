@@ -21,7 +21,8 @@
   field the server adds later does not stop a build already installed. A key repeated
   within one object keeps one of its values; which one is not promised and may differ
   from the Swift library. `NarrationAlignment.Word` is read the same way under any
-  `Json` configuration. `NarrationAlignment.timings`
+  `Json` configuration. Both documents are read as UTF-8, with or without a byte order
+  mark, and text in any other encoding is refused with `NotUTF8`. `NarrationAlignment.timings`
   compares the alignment's words with the passage's by canonical equivalence, so a
   letter written with a combining mark matches its precomposed spelling.
 - Nothing picks a recogniser's quirks or a language for the caller: the tracker takes

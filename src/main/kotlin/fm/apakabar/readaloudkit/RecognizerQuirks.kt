@@ -8,8 +8,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import java.nio.ByteBuffer
-import java.nio.charset.CodingErrorAction
 
 /**
  * Explicit spellings that one recognizer may return for particular written words.
@@ -94,8 +92,10 @@ class RecognizerQuirks(
          * another build. A field the table does not know is read past, at any depth, so that
          * a field the server adds later does not stop a build already installed. A key
          * repeated within one object keeps one of its values; which one is not promised and
-         * may differ between ports.
+         * may differ between ports. The table is read as UTF-8, with or without a byte order
+         * mark.
          *
+         * @throws NotUTF8 when [data] is text in another encoding.
          * @throws WrongBuild when the table was published for another build than [build].
          * @throws SerializationException when [data] is not such a table.
          */
@@ -143,15 +143,3 @@ class RecognizerQuirks(
             }
     }
 }
-
-internal fun utf8(data: ByteArray): String =
-    try {
-        Charsets.UTF_8
-            .newDecoder()
-            .onMalformedInput(CodingErrorAction.REPORT)
-            .onUnmappableCharacter(CodingErrorAction.REPORT)
-            .decode(ByteBuffer.wrap(data))
-            .toString()
-    } catch (error: java.nio.charset.CharacterCodingException) {
-        throw SerializationException("the data is not UTF-8", error)
-    }
