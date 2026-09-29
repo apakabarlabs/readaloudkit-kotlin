@@ -18,8 +18,8 @@ class NotUTF8 : Exception("the document is not UTF-8") {
 
 private val BYTE_ORDER_MARK = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
 private const val NUL_NO_JSON_TEXT_HOLDS: Byte = 0
-private const val DECODED_BYTE_ORDER_MARK = '﻿'
-private const val FIRST_PRINTABLE = ' '
+private const val DECODED_BYTE_ORDER_MARK = '\uFEFF'
+private const val FIRST_PRINTABLE = '\u0020'
 private const val ESCAPED_CODE_UNIT_LENGTH = 6
 private const val HEX_RADIX = 16
 
