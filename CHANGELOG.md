@@ -33,9 +33,13 @@ sounds in a recorded narration.
   in the shape `{"version": ..., "alignment": {...}}`; and a *hearing table*, the
   spellings one speech-recognition model build is known to write for particular words,
   by `RecognizerQuirks.decode(data, build)` in the shape
-  `{"build": ..., "version": ..., "words": {written: [{"heard": ..., "after": ...}]}}`.
-  `build` is the name of the recogniser build your app ships, the same name the table
-  was published under; a table published for another build throws
+  `{"build": ..., "version": ..., "words": {written: [{"heard": ..., "after": ...}]}}`:
+  `build` is the recogniser build's name; `version` is a string that changes whenever
+  the table does, required but not otherwise used by the library; each key of `words` is
+  a word as printed, and each of its entries allows the recogniser to return `heard` for
+  it, only where the printed word before it is `after`, or anywhere if `after` is left
+  out. The `build` you pass is the name of the recogniser build your app ships, the same
+  name the table was published under; a table published for another build throws
   `RecognizerQuirks.WrongBuild`.
 
   Both throw for a missing field, a value of the wrong type, or a word's `line` outside
