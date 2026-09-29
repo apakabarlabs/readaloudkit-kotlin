@@ -13,13 +13,21 @@ data class SampleRun(
 )
 
 @Serializable
+data class BarRun(
+    val value: Double,
+    val count: Int,
+)
+
+@Serializable
 data class WaveformCase(
     val name: String,
     val samples: List<SampleRun>,
     val bars: Int,
-    val envelope: List<Double>,
+    val envelope: List<BarRun>,
 ) {
     val built: FloatArray get() = samples.flatMap { run -> List(run.count) { run.value } }.toFloatArray()
+
+    val expected: List<Double> get() = envelope.flatMap { run -> List(run.count) { run.value } }
 }
 
 class WaveformEnvelopeTests {
@@ -27,10 +35,15 @@ class WaveformEnvelopeTests {
     fun `keeps the shape`(): List<DynamicTest> =
         Cases.tests(AudioCases.all.waveform, { it.name }) { case ->
             val envelope = WaveformEnvelope.make(from = case.built, bars = case.bars)
+            val expected = case.expected
 
-            assertEquals(case.envelope.size, envelope.size)
-            for ((bar, pair) in envelope.zip(case.envelope).withIndex()) {
-                assertTrue(Cases.close(pair.first, pair.second), "bar $bar is ${pair.first}")
-            }
+            assertEquals(expected.size, envelope.size)
+            val wrong =
+                envelope
+                    .zip(expected)
+                    .withIndex()
+                    .filter { (_, pair) -> !Cases.close(pair.first, pair.second) }
+                    .map { (bar, pair) -> "bar $bar is ${pair.first}" }
+            assertTrue(wrong.isEmpty(), wrong.take(3).joinToString(", "))
         }
 }

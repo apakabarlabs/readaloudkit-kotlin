@@ -19,8 +19,9 @@ object WaveformEnvelope {
     /**
      * Builds at most [bars] normalized amplitudes in the range zero through one.
      *
-     * Empty samples or a nonpositive bar count produce an empty envelope. Each input
-     * sample is a linear floating-point amplitude.
+     * Empty samples or a nonpositive bar count produce an empty envelope. More bars than
+     * samples, up to [Int.MAX_VALUE], give one bar a sample. Each input sample is a
+     * linear floating-point amplitude.
      */
     fun make(
         from: FloatArray,
@@ -28,9 +29,10 @@ object WaveformEnvelope {
     ): List<Double> {
         if (from.isEmpty() || bars <= 0) return emptyList()
         val count = min(bars, from.size)
+        val firstSample = { bar: Int -> (bar.toLong() * from.size / count).toInt() }
         return (0 until count).map { bar ->
-            val start = bar * from.size / count
-            val end = max((bar + 1) * from.size / count, start + 1)
+            val start = firstSample(bar)
+            val end = max(firstSample(bar + 1), start + 1)
             var squares = 0.0
             for (index in start until end) squares += (from[index] * from[index]).toDouble()
             val squareMean = squares / (end - start)

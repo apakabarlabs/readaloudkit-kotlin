@@ -4,7 +4,8 @@
 # `every_frame` for every frame of the buffer.
 #
 # `waveform` cases build samples from `samples`, runs of `count` samples at `value`,
-# and pin every bar WaveformEnvelope returns, equal to within a billionth.
+# and pin every bar WaveformEnvelope returns in `envelope`, runs of `count` bars at
+# `value`, equal to within a billionth.
 gain:
   - name: "a cut segment reaches silence at both edges"
     frame_count: 100
@@ -24,14 +25,24 @@ waveform:
   - name: "silence stays flat and sound keeps its shape"
     samples: [{value: 0, count: 8}, {value: 0.5, count: 8}]
     bars: 4
-    envelope: [0, 0, 0.9773200019271194, 0.9773200019271194]
+    envelope: [{value: 0, count: 2}, {value: 0.9773200019271194, count: 2}]
 
   - name: "a short recording does not invent empty bars"
     samples: [{value: 0.1, count: 1}, {value: 0.2, count: 1}]
     bars: 48
-    envelope: [0.6666666734976858, 0.8004577826816776]
+    envelope: [{value: 0.6666666734976858, count: 1}, {value: 0.8004577826816776, count: 1}]
 
   - name: "no samples make no bars"
     samples: []
     bars: 48
     envelope: []
+
+  - name: "the most bars a count can ask for give one bar a sample, where bar times samples outgrows 32 bits"
+    samples: [{value: 0, count: 23171}, {value: 0.5, count: 23171}]
+    bars: 2147483647
+    envelope: [{value: 0, count: 23171}, {value: 0.9773200019271194, count: 23171}]
+
+  - name: "one bar fewer than the samples still reaches the last sample, where bar times samples outgrows 32 bits"
+    samples: [{value: 0, count: 23171}, {value: 0.5, count: 23171}]
+    bars: 46341
+    envelope: [{value: 0, count: 23171}, {value: 0.9773200019271194, count: 23170}]
