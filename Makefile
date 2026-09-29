@@ -1,19 +1,15 @@
 SWIFT_DIR = ../readaloudkit-swift
 TEST_RESOURCES = src/test/resources
-COMMENTCENSOR_REF ?= v0.3.3
-COMMENTCENSOR_ENV = build/commentcensor
-COMMENTCENSOR = $(COMMENTCENSOR_ENV)/bin/commentcensor
 
 .DEFAULT_GOAL := build
 
 .PHONY: build test test-build docs comments lint lint-fix format clean install install-tools sync-yaml publish publish-local publish-check
 
 install-tools:
-	python3 -m venv $(COMMENTCENSOR_ENV)
-	$(COMMENTCENSOR_ENV)/bin/pip install --quiet --upgrade git+https://github.com/botforge-pro/commentcensor.git@$(COMMENTCENSOR_REF)
+	python3 -m pip install --quiet --upgrade git+https://github.com/botforge-pro/commentcensor.git
 
 comments:
-	$(COMMENTCENSOR) .
+	commentcensor .
 
 test:
 	./gradlew test
