@@ -88,10 +88,15 @@ data class NarrationAlignment(
         }
     }
 
-    /** Supplied word times that cannot describe one recording read in order. */
+    /**
+     * Supplied word times that cannot describe one recording read in order.
+     *
+     * It stands apart from `SerializationException`, which reports a document of another
+     * shape: a timing error comes from a well-formed document whose times cannot stand.
+     */
     sealed class TimingError(
         message: String,
-    ) : SerializationException(message) {
+    ) : Exception(message) {
         /** The word at [word], on printed line [line], starts before the recording does. */
         data class NegativeStart(
             val word: Int,

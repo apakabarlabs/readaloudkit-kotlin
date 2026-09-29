@@ -137,8 +137,7 @@ class NarrationAlignmentTests {
                 return@tests
             }
             if (case.malformed == true) {
-                val error = assertFailsWith<SerializationException> { PublishedAlignment.decode(data) }
-                assertFalse(error is NarrationAlignment.TimingError, "$error is a timing error, not another shape")
+                assertFailsWith<SerializationException> { PublishedAlignment.decode(data) }
                 return@tests
             }
             val expected = checkNotNull(case.published) { "a readable case pins the document" }
@@ -178,6 +177,11 @@ class NarrationAlignmentTests {
         val json = Json.encodeToString(NarrationAlignment.serializer(), original)
 
         assertEquals(original, Json.decodeFromString(NarrationAlignment.serializer(), json))
+    }
+
+    @Test
+    fun `a timing error is not a document error`() {
+        assertFalse(SerializationException::class.java.isAssignableFrom(NarrationAlignment.TimingError::class.java))
     }
 
     @Test
