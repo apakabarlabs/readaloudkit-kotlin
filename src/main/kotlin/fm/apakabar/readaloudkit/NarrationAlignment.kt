@@ -13,6 +13,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import java.text.Normalizer
 
 /**
  * Word-timing metadata supplied for a recorded narration.
@@ -105,7 +106,9 @@ data class NarrationAlignment(
      * Associates the supplied times with the words of a passage.
      *
      * The alignment carries the words it was built from. If the passage changes after
-     * timing, this method refuses it instead of shifting every later highlight.
+     * timing, this method refuses it instead of shifting every later highlight. Words
+     * are compared by canonical equivalence, so a letter written with a combining mark
+     * matches its precomposed spelling, and each timing carries the passage's spelling.
      *
      * @throws AlignmentError when the passage's words are not the aligned words.
      */
@@ -118,7 +121,7 @@ data class NarrationAlignment(
             throw AlignmentError.WordCountMismatch(expected = spoken.size, found = words.size)
         }
         return spoken.zip(words).mapIndexed { index, (word, measured) ->
-            if (word.text != measured.text || word.lineIndex != measured.line) {
+            if (composed(word.text) != composed(measured.text) || word.lineIndex != measured.line) {
                 throw AlignmentError.WordMismatch(
                     index = index,
                     expected = word.text,
@@ -165,6 +168,8 @@ data class NarrationAlignment(
     companion object {
         private val ALIGNMENT_FIELDS = setOf("piece", "duration", "words", "recording")
         private val WORD_FIELDS = setOf("line", "text", "start", "end")
+
+        private fun composed(text: String): String = Normalizer.normalize(text, Normalizer.Form.NFC)
 
         internal fun read(element: JsonElement): NarrationAlignment {
             val fields = element as? JsonObject ?: throw SerializationException("an alignment is not an object")

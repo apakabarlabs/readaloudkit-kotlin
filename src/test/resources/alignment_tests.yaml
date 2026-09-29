@@ -254,6 +254,18 @@ timings:
       - {text: "desire", line: 1, start: 2.0, end: 2.5}
       - {text: "increase", line: 1, start: 2.5, end: 3.2}
 
+  - name: "a word spelt with a combining mark is the same word as its precomposed spelling"
+    lines: ["cafe\u0301 au lait"]
+    interior_marks: "'’-"
+    words:
+      - {line: 0, text: "caf\u00E9", start: 0, end: 0.4}
+      - {line: 0, text: "au", start: 0.4, end: 0.5}
+      - {line: 0, text: "lait", start: 0.5, end: 0.9}
+    timings:
+      - {text: "cafe\u0301", line: 0, start: 0, end: 0.4}
+      - {text: "au", line: 0, start: 0.4, end: 0.5}
+      - {text: "lait", line: 0, start: 0.5, end: 0.9}
+
   - name: "a text edited after the markup was made is refused, not slid by one word"
     lines: ["From fairest creatures", "we desire increase, and more"]
     interior_marks: "'’-"
