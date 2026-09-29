@@ -24,6 +24,8 @@
 
   Decoding refuses a value of another type than the field declares and word times
   that cannot describe one recording read in order, naming the word and its line.
+  Decoding an alignment, its words or a recogniser quirk table refuses a field it does
+  not have, naming that field, rather than skipping it.
 - Nothing picks a language for the caller: the tracker, `wordsPerLine`,
   `NarrationAlignment.timings` and `NarrationTimeline.estimate` take their tokenizer,
   and the estimate and `TranscriptAligner.timings` their weighting.

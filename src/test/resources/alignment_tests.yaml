@@ -69,6 +69,22 @@ decode:
     json: '{"piece": "1", "duration": 1}'
     malformed: true
 
+  - name: "a piece written as null is refused"
+    json: '{"piece": null, "duration": 1, "words": []}'
+    malformed: true
+
+  - name: "a field the alignment does not have is refused, not skipped"
+    json: '{"piece": "18", "sonnet": 18, "duration": 4.5, "words": []}'
+    malformed: true
+
+  - name: "a field a word does not have is refused, not skipped"
+    json: '{"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": 0, "end": 0.1, "confidence": 0.9}]}'
+    malformed: true
+
+  - name: "a stray field is refused before the times are judged"
+    json: '{"piece": "1", "duration": 1, "speaker": "A", "words": [{"line": 0, "text": "a", "start": -1, "end": 0.1}]}'
+    malformed: true
+
   - name: "a word that starts before the recording is refused"
     json: '{"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": -0.1, "end": 0.1}]}'
     timing_error: {kind: negative_start, word: 0, line: 0}

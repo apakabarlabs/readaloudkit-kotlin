@@ -67,6 +67,16 @@ tests:
     model: "parakeet"
     malformed: true
 
+  - name: "an allowance with a field it does not have is refused, not skipped"
+    table: '{"parakeet": {"in": [{"heard": "and", "before": "each"}]}}'
+    model: "parakeet"
+    malformed: true
+
+  - name: "a stray field in another model's section refuses the whole table"
+    table: '{"parakeet": {"in": ["and"]}, "spotless": {"in": [{"heard": "and", "weight": 1}]}}'
+    model: "parakeet"
+    malformed: true
+
   - name: "two spellings of one key are added together, not one over the other"
     allowances:
       "Whate’er": ["whatever"]

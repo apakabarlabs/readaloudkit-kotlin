@@ -90,7 +90,8 @@ class RecognizerQuirks(
          *
          * The JSON root maps model identifiers to written words. Each written word maps
          * to an array containing either a heard string or `{ "heard": ..., "after": ... }`.
-         * Every model's section is read, so a table malformed anywhere is refused.
+         * A pair with any other field is refused, as is a value of another type. Every
+         * model's section is read, so a table malformed anywhere is refused.
          *
          * @throws UnknownModel when the table has no section for [model].
          * @throws SerializationException when [data] is not such a table.
@@ -110,6 +111,8 @@ class RecognizerQuirks(
             return RecognizerQuirks(allowances)
         }
 
+        private val ALLOWANCE_FIELDS = setOf("heard", "after")
+
         private fun objectOf(
             element: JsonElement,
             name: String,
@@ -120,6 +123,7 @@ class RecognizerQuirks(
             written: String,
         ): Allowance {
             if (element is JsonObject) {
+                refuseFields(element, otherThan = ALLOWANCE_FIELDS, of = "an allowance for $written")
                 val heard =
                     string(element["heard"], "heard for $written")
                         ?: throw SerializationException("an allowance for $written has no heard spelling")

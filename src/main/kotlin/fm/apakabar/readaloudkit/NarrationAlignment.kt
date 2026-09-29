@@ -21,7 +21,9 @@ import kotlinx.serialization.json.JsonPrimitive
  * Unlike an estimated timeline, an alignment preserves the producer's supplied start
  * and end for every listed word. Decoding refuses times that cannot describe one
  * recording read in order: a negative start, an end before its start, or a word that
- * starts before the word listed ahead of it. Values created in code are not checked.
+ * starts before the word listed ahead of it. It also refuses a field neither the
+ * alignment nor its words have, and a value of another type than the field's. Values
+ * created in code are not checked.
  *
  * The representation is shared by the tool that measures a recording and the client
  * that presents it.
@@ -140,8 +142,9 @@ data class NarrationAlignment(
     )
 
     /**
-     * Writes an alignment as JSON, and reads one only from JSON, refusing a value of
-     * another type than the field declares and times that are out of order or bounds.
+     * Writes an alignment as JSON, and reads one only from JSON, refusing a field the
+     * alignment or a word does not have, a value of another type than the field declares
+     * and times that are out of order or bounds.
      */
     object Serializer : KSerializer<NarrationAlignment> {
         override val descriptor: SerialDescriptor = Written.serializer().descriptor
@@ -161,18 +164,21 @@ data class NarrationAlignment(
     }
 
     companion object {
-        private val json = Json { ignoreUnknownKeys = true }
+        private val ALIGNMENT_FIELDS = setOf("piece", "duration", "words", "recording")
+        private val WORD_FIELDS = setOf("line", "text", "start", "end")
 
         /**
          * Decodes an alignment from its JSON representation.
          *
          * @throws TimingError naming the first word whose times cannot stand.
-         * @throws SerializationException when [data] is not an alignment.
+         * @throws SerializationException when [data] is not an alignment, or has a field
+         * the alignment or one of its words does not have.
          */
-        fun decode(data: ByteArray): NarrationAlignment = json.decodeFromString(serializer(), utf8(data))
+        fun decode(data: ByteArray): NarrationAlignment = Json.decodeFromString(serializer(), utf8(data))
 
         private fun read(element: JsonElement): NarrationAlignment {
             val fields = element as? JsonObject ?: throw SerializationException("an alignment is not an object")
+            refuseFields(fields, otherThan = ALIGNMENT_FIELDS, of = "an alignment")
             val listed = fields["words"] as? JsonArray ?: throw SerializationException("the alignment has no list of words")
             val words = listed.mapIndexed { index, word -> word(word, index) }
             check(words)
@@ -189,6 +195,7 @@ data class NarrationAlignment(
             index: Int,
         ): Word {
             val fields = element as? JsonObject ?: throw SerializationException("word $index is not an object")
+            refuseFields(fields, otherThan = WORD_FIELDS, of = "word $index")
             return Word(
                 line = integer(fields["line"], "line of word $index"),
                 text = string(fields["text"], "text of word $index") ?: throw SerializationException("word $index has no text"),
