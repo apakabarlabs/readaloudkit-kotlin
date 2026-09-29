@@ -25,6 +25,10 @@ data class PublishedAlignment(
          * its values; which one is not promised and may differ between ports. The document
          * is read as UTF-8, with or without a byte order mark.
          *
+         * This rests on a contract with the server: it may add a field, but never one that
+         * changes the meaning of a field read here, and it never renames or drops a field.
+         * A renamed `recording` would read as no recording.
+         *
          * @throws NotUTF8 when [data] is text in another encoding.
          * @throws NarrationAlignment.TimingError naming the first word whose times cannot stand.
          * @throws SerializationException when [data] is not such a document.

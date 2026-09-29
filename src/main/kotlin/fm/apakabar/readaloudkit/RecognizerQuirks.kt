@@ -95,6 +95,11 @@ class RecognizerQuirks(
          * may differ between ports. The table is read as UTF-8, with or without a byte order
          * mark.
          *
+         * This rests on a contract with the server: it may add a field, but never one that
+         * changes the meaning of a field read here, such as one that narrows an allowance,
+         * and it never renames or drops a field. An allowance whose `after` is misspelt is
+         * read as an allowance with no `after`, allowed after any word.
+         *
          * @throws NotUTF8 when [data] is text in another encoding.
          * @throws WrongBuild when the table was published for another build than [build].
          * @throws SerializationException when [data] is not such a table.
