@@ -64,11 +64,12 @@ data class WordAttempt(
  * every word that follows it.
  *
  * @property quirks Model-specific transcription allowances applied while checking.
+ * @property tokenizer Splits both the printed lines and every transcript checked against them.
  */
 class SpokenLineTracker(
     lines: List<String>,
     val quirks: RecognizerQuirks = RecognizerQuirks.none,
-    tokenizer: WordTokenizer = WordTokenizer.latinScript,
+    val tokenizer: WordTokenizer = WordTokenizer.latinScript,
 ) {
     constructor(
         line: String,
@@ -123,12 +124,11 @@ class SpokenLineTracker(
     /**
      * Checks a complete recognized transcript against the tracked printed words.
      *
-     * Extra words outside the best alignment do not count against the printed words.
+     * The transcript is split by the tracker's own [tokenizer], so printed and heard
+     * words are cut by one rule. Extra words outside the best alignment do not count
+     * against the printed words.
      */
-    fun progress(
-        heard: String,
-        tokenizer: WordTokenizer = WordTokenizer.latinScript,
-    ): Progress {
+    fun progress(heard: String): Progress {
         val said = tokenizer.wordRanges(heard).map { heard.substring(it) }
         val checked = SpokenWords.check(expected = expected, heard = said, quirks = quirks)
         val checks = MutableList(expected.size) { WordCheck.WRONG }

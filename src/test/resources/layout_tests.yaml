@@ -1,0 +1,30 @@
+# Where a line of verse turns over, measured in the caller's units.
+#
+# `break` cases pin the row starts one line is broken at; `run` cases pin the width of
+# words `[from, to)` set with `space` between them.
+break:
+  - name: "a line that fits is never broken"
+    words: [10, 10, 10]
+    space: 1
+    width: 100
+    indent: 8
+    starts: [0]
+
+  - name: "a single word is never broken, however wide"
+    words: [500]
+    space: 1
+    width: 100
+    indent: 8
+    starts: [0]
+
+  - name: "a stranded word is accepted only when nothing else is possible"
+    words: [40, 40]
+    space: 1
+    width: 50
+    indent: 8
+    starts: [0, 1]
+
+run:
+  - {name: "every word and the spaces between them", words: [10, 10, 10], from: 0, to: 3, space: 2, width: 34}
+  - {name: "one word has no space", words: [10, 10, 10], from: 1, to: 2, space: 2, width: 10}
+  - {name: "no words have no width", words: [10, 10, 10], from: 2, to: 2, space: 2, width: 0}

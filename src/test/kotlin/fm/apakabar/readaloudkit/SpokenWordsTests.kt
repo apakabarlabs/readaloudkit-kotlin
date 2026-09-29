@@ -1,52 +1,59 @@
 package fm.apakabar.readaloudkit
 
+import com.charleskorn.kaml.YamlNode
+import kotlinx.serialization.Serializable
+import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+
+@Serializable
+data class SpokenWordsCases(
+    val tests: List<SpokenWordsCase>,
+    val faithful: List<FaithfulCase>,
+) {
+    companion object {
+        val all: SpokenWordsCases by lazy { Cases.load("spoken_words_tests.yaml", serializer()) }
+    }
+}
+
+@Serializable
+data class SpokenWordsCase(
+    val name: String,
+    val expected: List<String>,
+    val heard: List<String>,
+    val quirks: Map<String, List<YamlNode>>? = null,
+    val matches: Int? = null,
+    val faithful: Set<Int>,
+)
+
+@Serializable
+data class FaithfulCase(
+    val name: String,
+    val heard: String,
+    val written: String,
+    val faithful: Boolean,
+)
 
 class SpokenWordsTests {
-    private val quirks = RecognizerQuirks(allowances = mapOf("heir" to listOf("air"), "O" to listOf("oh")))
+    @TestFactory
+    fun `accepts only faithful words`(): List<DynamicTest> =
+        Cases.tests(SpokenWordsCases.all.tests, { it.name }) { case ->
+            val checked = SpokenWords.check(expected = case.expected, heard = case.heard, quirks = Cases.quirks(case.quirks))
 
-    @Test
-    fun `a word said as written is faithful`() {
-        val checked = SpokenWords.check(expected = listOf("love"), heard = listOf("love"), quirks = RecognizerQuirks.none)
-        assertEquals(setOf(0), checked.faithful)
-    }
+            case.matches?.let { assertEquals(it, checked.matches.size) }
+            assertEquals(case.faithful, checked.faithful)
+        }
 
-    @Test
-    fun `a similar word is paired but not faithful`() {
-        val checked = SpokenWords.check(expected = listOf("love"), heard = listOf("dove"), quirks = RecognizerQuirks.none)
-        assertEquals(1, checked.matches.size)
-        assertTrue(checked.faithful.isEmpty())
-    }
-
-    @Test
-    fun `an elision spelled out is faithful without a patch`() {
-        val checked = SpokenWords.check(expected = listOf("tatter’d"), heard = listOf("tattered"), quirks = RecognizerQuirks.none)
-        assertEquals(setOf(0), checked.faithful)
-    }
-
-    @Test
-    fun `a patched word is paired by the patch and then accepted by it`() {
-        val checked = SpokenWords.check(expected = listOf("heir"), heard = listOf("air"), quirks = quirks)
-        assertEquals(1, checked.matches.size)
-        assertEquals(setOf(0), checked.faithful)
-    }
-
-    @Test
-    fun `without the table the same pair is not even put together`() {
-        val checked = SpokenWords.check(expected = listOf("heir"), heard = listOf("air"), quirks = RecognizerQuirks.none)
-        assertTrue(checked.faithful.isEmpty())
-    }
-
-    @Test
-    fun `a word nothing was heard for is neither paired nor faithful`() {
-        val checked = SpokenWords.check(expected = listOf("love", "is"), heard = listOf("love"), quirks = RecognizerQuirks.none)
-        assertEquals(setOf(0), checked.faithful)
-    }
+    @TestFactory
+    fun `tells a faithful spelling`(): List<DynamicTest> =
+        Cases.tests(SpokenWordsCases.all.faithful, { it.name }) { case ->
+            assertEquals(case.faithful, SpokenLineTracker.isFaithful(case.heard, to = case.written))
+        }
 
     @Test
     fun `the reader's word checks are that same pass`() {
+        val quirks = RecognizerQuirks(allowances = mapOf("heir" to listOf("air"), "O" to listOf("oh")))
         val tracker = SpokenLineTracker(line = "O heir of love", quirks = quirks)
         val progress = tracker.progress(heard = "oh air of dove")
         val checked =

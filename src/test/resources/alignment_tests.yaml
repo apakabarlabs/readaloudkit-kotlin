@@ -1,0 +1,52 @@
+# Supplied word times married to the words of a passage, or refused.
+#
+# `timings_at` pins timings by word index; `count` is how many there are. A refused
+# case names its error: `word_count_mismatch` or `word_mismatch`, with the fields the
+# error carries.
+tests:
+  - name: "measured times land on the words of the passage"
+    lines: ["From fairest creatures", "we desire increase,"]
+    words:
+      - {line: 0, text: "From", start: 0, end: 0.3}
+      - {line: 0, text: "fairest", start: 0.3, end: 0.9}
+      - {line: 0, text: "creatures", start: 0.9, end: 1.5}
+      - {line: 1, text: "we", start: 1.8, end: 2.0}
+      - {line: 1, text: "desire", start: 2.0, end: 2.5}
+      - {line: 1, text: "increase", start: 2.5, end: 3.2}
+    count: 6
+    timings_at:
+      - {index: 0, text: "From", line: 0, start: 0, end: 0.3}
+      - {index: 3, text: "we", line: 1, start: 1.8, end: 2.0}
+
+  - name: "a text edited after the markup was made is refused, not slid by one word"
+    lines: ["From fairest creatures", "we desire increase, and more"]
+    words:
+      - {line: 0, text: "From", start: 0, end: 0.3}
+      - {line: 0, text: "fairest", start: 0.3, end: 0.9}
+      - {line: 0, text: "creatures", start: 0.9, end: 1.5}
+      - {line: 1, text: "we", start: 1.8, end: 2.0}
+      - {line: 1, text: "desire", start: 2.0, end: 2.5}
+      - {line: 1, text: "increase", start: 2.5, end: 3.2}
+    word_count_mismatch: {expected: 8, found: 6}
+
+  - name: "a word swapped in the text is caught by name"
+    lines: ["From fairest creatures", "we desire increases,"]
+    words:
+      - {line: 0, text: "From", start: 0, end: 0.3}
+      - {line: 0, text: "fairest", start: 0.3, end: 0.9}
+      - {line: 0, text: "creatures", start: 0.9, end: 1.5}
+      - {line: 1, text: "we", start: 1.8, end: 2.0}
+      - {line: 1, text: "desire", start: 2.0, end: 2.5}
+      - {line: 1, text: "increase", start: 2.5, end: 3.2}
+    word_mismatch: {index: 5, expected: "increases", found: "increase"}
+
+  - name: "a word moved to another line is caught even when the spelling matches"
+    lines: ["From fairest creatures we", "desire increase,"]
+    words:
+      - {line: 0, text: "From", start: 0, end: 0.3}
+      - {line: 0, text: "fairest", start: 0.3, end: 0.9}
+      - {line: 0, text: "creatures", start: 0.9, end: 1.5}
+      - {line: 1, text: "we", start: 1.8, end: 2.0}
+      - {line: 1, text: "desire", start: 2.0, end: 2.5}
+      - {line: 1, text: "increase", start: 2.5, end: 3.2}
+    word_mismatch: {index: 3, expected: "we", found: "we"}

@@ -23,6 +23,7 @@ dependencies {
     api("fm.apakabar:readalign-kotlin:0.17.1")
     api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 
+    testImplementation("io.heapy.kotaml:kotaml:0.110.0")
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
 }

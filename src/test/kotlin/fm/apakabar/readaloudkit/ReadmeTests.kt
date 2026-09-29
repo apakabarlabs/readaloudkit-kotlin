@@ -1,32 +1,36 @@
 package fm.apakabar.readaloudkit
 
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
+import java.io.File
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class ReadmeTests {
-    private val printedLines = listOf("From fairest creatures", "we desire increase")
-
-    @Test
-    fun `a transcript that says every word is complete`() {
+    private val usage =
+        """
         val tracker = SpokenLineTracker(lines = printedLines, quirks = RecognizerQuirks.none)
+        val saidEveryWord = tracker.progress(heard = transcript).isComplete
+        """.trimIndent()
 
-        assertTrue(tracker.progress(heard = "From fairest creatures we desire increase").isComplete)
+    private fun saidEveryWord(
+        printedLines: List<String>,
+        transcript: String,
+    ): Boolean {
+        val tracker = SpokenLineTracker(lines = printedLines, quirks = RecognizerQuirks.none)
+        val saidEveryWord = tracker.progress(heard = transcript).isComplete
+        return saidEveryWord
     }
 
     @Test
-    fun `a dropped word is not in the matches, so only isComplete shows it`() {
-        val tracker = SpokenLineTracker(lines = printedLines, quirks = RecognizerQuirks.none)
-        val transcript = "From fairest creatures desire increase"
-        val check =
-            SpokenWords.check(
-                expected = tracker.expected,
-                heard = transcript.split(" "),
-                quirks = RecognizerQuirks.none,
-            )
+    fun `the README shows the completeness check these tests run`() {
+        assertTrue(File("README.md").readText().contains("\n$usage\n```"))
+    }
 
-        assertEquals(check.matches.size, check.faithful.size)
-        assertFalse(tracker.progress(heard = transcript).isComplete)
+    @Test
+    fun `the README's completeness check tells a dropped word from a reading said whole`() {
+        val lines = listOf("From fairest creatures", "we desire increase")
+
+        assertTrue(saidEveryWord(lines, "From fairest creatures we desire increase"))
+        assertFalse(saidEveryWord(lines, "From fairest creatures desire increase"))
     }
 }

@@ -1,0 +1,43 @@
+# Which heard spellings a recogniser's quirk table allows for a written word.
+#
+# A case gives either `table`, the JSON a server publishes, with the `model` to read
+# from it, or `allowances` directly: written word to heard spellings, each a string or
+# a `{heard, after}` pair. `refused` says decoding the table must fail for this model.
+# Each query asks whether `heard` is allowed for `written`, after `after` if given.
+tests:
+  - name: "a model's patches are read from its own section"
+    table: '{"parakeet": {"tatter''d": ["tattered"], "in": [{"heard": "and", "after": "each"}]}, "spotless": {}}'
+    model: "parakeet"
+    empty: false
+    queries:
+      - {heard: "tattered", written: "tatter'd", allowed: true}
+      - {heard: "tattered", written: "battered", allowed: false}
+
+  - name: "a patch tied to a phrase fires there and nowhere else"
+    table: '{"parakeet": {"tatter''d": ["tattered"], "in": [{"heard": "and", "after": "each"}]}, "spotless": {}}'
+    model: "parakeet"
+    queries:
+      - {heard: "and", written: "in", after: "each", allowed: true}
+      - {heard: "and", written: "in", after: "delights", allowed: false}
+      - {heard: "and", written: "in", allowed: false}
+
+  - name: "a model with an empty section needs no patches"
+    table: '{"parakeet": {"tatter''d": ["tattered"], "in": [{"heard": "and", "after": "each"}]}, "spotless": {}}'
+    model: "spotless"
+    empty: true
+    queries:
+      - {heard: "tattered", written: "tatter'd", allowed: false}
+
+  - name: "a model the table says nothing about is refused, not treated as spotless"
+    table: '{"parakeet": {"tatter''d": ["tattered"], "in": [{"heard": "and", "after": "each"}]}, "spotless": {}}'
+    model: "parakeet-v4"
+    refused: true
+
+  - name: "two spellings of one key are added together, not one over the other"
+    allowances:
+      "Whate’er": ["whatever"]
+      "whate’er": ["what’er"]
+    queries:
+      - {heard: "whatever", written: "Whate’er", allowed: true}
+      - {heard: "whater", written: "whate’er", allowed: true}
+      - {heard: "whenever", written: "whate’er", allowed: false}

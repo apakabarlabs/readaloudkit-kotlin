@@ -1,24 +1,42 @@
 package fm.apakabar.readaloudkit
 
-import org.junit.jupiter.api.Test
+import kotlinx.serialization.Serializable
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.TestFactory
 import kotlin.test.assertEquals
 
-class PieceProgressTests {
-    @Test
-    fun `progress keeps non-consecutive pieces in their positions`() {
-        val states = PieceProgress.states(total = 7, tried = setOf(1, 3, 5), cleared = setOf(1, 5))
-
-        assertEquals(
-            listOf(
-                PieceProgressState.UNTOUCHED,
-                PieceProgressState.CLEARED,
-                PieceProgressState.UNTOUCHED,
-                PieceProgressState.TRIED,
-                PieceProgressState.UNTOUCHED,
-                PieceProgressState.CLEARED,
-                PieceProgressState.UNTOUCHED,
-            ),
-            states,
-        )
+@Serializable
+data class ProgressCases(
+    val pieces: List<PiecesCase>,
+    val stage: List<StageCase>,
+) {
+    companion object {
+        val all: ProgressCases by lazy { Cases.load("progress_tests.yaml", serializer()) }
     }
+}
+
+@Serializable
+data class PiecesCase(
+    val name: String,
+    val total: Int,
+    val tried: Set<Int>,
+    val cleared: Set<Int>,
+    val states: List<String>,
+)
+
+@Serializable
+data class StageCase(
+    val name: String,
+    val pieces: List<String>,
+    val stage: String,
+)
+
+class PieceProgressTests {
+    @TestFactory
+    fun `keeps pieces in their positions`(): List<DynamicTest> =
+        Cases.tests(ProgressCases.all.pieces, { it.name }) { case ->
+            val states = PieceProgress.states(total = case.total, tried = case.tried, cleared = case.cleared)
+
+            assertEquals(case.states.map(::pieceProgressState), states)
+        }
 }

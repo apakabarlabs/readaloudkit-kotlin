@@ -1,24 +1,37 @@
 package fm.apakabar.readaloudkit
 
-import org.junit.jupiter.api.Test
+import kotlinx.serialization.Serializable
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.TestFactory
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+@Serializable
+data class SampleRun(
+    val value: Float,
+    val count: Int,
+)
+
+@Serializable
+data class WaveformCase(
+    val name: String,
+    val samples: List<SampleRun>,
+    val bars: Int,
+    val count: Int,
+    val exactly: List<List<Double>>? = null,
+    val above: List<List<Double>>? = null,
+) {
+    val built: FloatArray get() = samples.flatMap { run -> List(run.count) { run.value } }.toFloatArray()
+}
+
 class WaveformEnvelopeTests {
-    @Test
-    fun `silence stays flat and sound keeps its shape`() {
-        val envelope = WaveformEnvelope.make(from = FloatArray(8) + FloatArray(8) { 0.5f }, bars = 4)
+    @TestFactory
+    fun `keeps the shape`(): List<DynamicTest> =
+        Cases.tests(AudioCases.all.waveform, { it.name }) { case ->
+            val envelope = WaveformEnvelope.make(from = case.built, bars = case.bars)
 
-        assertEquals(4, envelope.size)
-        assertEquals(0.0, envelope[0])
-        assertEquals(0.0, envelope[1])
-        assertTrue(envelope[2] > 0.8)
-        assertTrue(envelope[3] > 0.8)
-    }
-
-    @Test
-    fun `a short recording does not invent empty bars`() {
-        assertEquals(2, WaveformEnvelope.make(from = floatArrayOf(0.1f, 0.2f), bars = 48).size)
-        assertTrue(WaveformEnvelope.make(from = FloatArray(0), bars = 48).isEmpty())
-    }
+            assertEquals(case.count, envelope.size)
+            for ((bar, value) in case.exactly ?: emptyList()) assertEquals(value, envelope[bar.toInt()], "bar $bar")
+            for ((bar, value) in case.above ?: emptyList()) assertTrue(envelope[bar.toInt()] > value, "bar $bar")
+        }
 }

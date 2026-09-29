@@ -1,0 +1,39 @@
+# Gains and display amplitudes computed from audio.
+#
+# `gain` cases pin the gain PlaybackEnvelope gives each listed `[frame, gain]`, or
+# `every_frame` for every frame of the buffer.
+#
+# `waveform` cases build samples from `samples`, runs of `count` samples at `value`,
+# and pin how many bars come back, bars that are `exactly` a value and bars `above` one.
+gain:
+  - name: "a cut segment reaches silence at both edges"
+    frame_count: 100
+    fade_frame_count: 10
+    fades_in: true
+    fades_out: true
+    gains: [[0, 0], [5, 0.5], [10, 1], [89, 1], [94, 0.5], [99, 0]]
+
+  - name: "an uncut recording keeps every sample"
+    frame_count: 100
+    fade_frame_count: 10
+    fades_in: false
+    fades_out: false
+    every_frame: 1
+
+waveform:
+  - name: "silence stays flat and sound keeps its shape"
+    samples: [{value: 0, count: 8}, {value: 0.5, count: 8}]
+    bars: 4
+    count: 4
+    exactly: [[0, 0], [1, 0]]
+    above: [[2, 0.8], [3, 0.8]]
+
+  - name: "a short recording does not invent empty bars"
+    samples: [{value: 0.1, count: 1}, {value: 0.2, count: 1}]
+    bars: 48
+    count: 2
+
+  - name: "no samples make no bars"
+    samples: []
+    bars: 48
+    count: 0

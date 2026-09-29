@@ -1,0 +1,109 @@
+# How a printed line is cut into the words a reader says, and into drawable segments.
+#
+# `words` cases list the spelling of every word `wordRanges` finds in `line`, split by
+# the Latin-script tokenizer unless `interior_marks` names the marks a word may hold.
+#
+# `segments` cases list every segment of `line` in order. A segment without `index` is
+# wordless; `opening`, `word`, `closing` and `space` default to the empty string.
+#
+# `passage` cases list what `words(in:)` returns for a passage of several lines.
+words:
+  - name: "apostrophes hold elisions together, typeset"
+    line: "That thereby beauty’s rose might never die,"
+    words: ["That", "thereby", "beauty’s", "rose", "might", "never", "die"]
+
+  - name: "apostrophes hold elisions together, keyed"
+    line: "Feed'st thy light's flame"
+    words: ["Feed'st", "thy", "light's", "flame"]
+
+  - name: "hyphens hold compounds together"
+    line: "with self-substantial fuel,"
+    words: ["with", "self-substantial", "fuel"]
+
+  - name: "punctuation between words is dropped"
+    line: "Thy self thy foe, to thy sweet self too cruel:"
+    words: ["Thy", "self", "thy", "foe", "to", "thy", "sweet", "self", "too", "cruel"]
+
+  - name: "an opening quotation mark stays outside the word it wraps"
+    line: "If thou couldst answer ‘This fair child of mine"
+    words: ["If", "thou", "couldst", "answer", "This", "fair", "child", "of", "mine"]
+
+  - name: "a closing quotation mark stays outside the word it wraps"
+    line: "Shall sum my count, and make my old excuse,’"
+    words: ["Shall", "sum", "my", "count", "and", "make", "my", "old", "excuse"]
+
+  - name: "an empty line yields no words"
+    line: ""
+    words: []
+
+  - name: "a line with no letters yields no words"
+    line: "..."
+    words: []
+
+  - name: "a letter written with a combining mark is one character of its word"
+    line: "café, au lait"
+    words: ["café", "au", "lait"]
+
+  - name: "a language without apostrophe elisions can say so"
+    line: "beauty's rose"
+    interior_marks: "-"
+    words: ["beauty", "s", "rose"]
+
+segments:
+  - name: "a line splits into pieces that put it back together unchanged"
+    line: "Thy self thy foe, to thy sweet self too cruel:"
+    segments:
+      - {index: 0, word: "Thy", space: " "}
+      - {index: 1, word: "self", space: " "}
+      - {index: 2, word: "thy", space: " "}
+      - {index: 3, word: "foe", closing: ",", space: " "}
+      - {index: 4, word: "to", space: " "}
+      - {index: 5, word: "thy", space: " "}
+      - {index: 6, word: "sweet", space: " "}
+      - {index: 7, word: "self", space: " "}
+      - {index: 8, word: "too", space: " "}
+      - {index: 9, word: "cruel", closing: ":"}
+
+  - name: "a mark that opens a word goes with that word, not with the one before it"
+    line: "she said: ‘go on’"
+    segments:
+      - {index: 0, word: "she", space: " "}
+      - {index: 1, word: "said", closing: ":", space: " "}
+      - {index: 2, opening: "‘", word: "go", space: " "}
+      - {index: 3, word: "on", closing: "’"}
+
+  - name: "a line that opens with a quotation mark gives it to its first word"
+    line: "‘go on’ she said"
+    segments:
+      - {index: 0, opening: "‘", word: "go", space: " "}
+      - {index: 1, word: "on", closing: "’", space: " "}
+      - {index: 2, word: "she", space: " "}
+      - {index: 3, word: "said"}
+
+  - name: "marks with no space around them stand with the word before"
+    line: "here,—there"
+    segments:
+      - {index: 0, word: "here", closing: ",—"}
+      - {index: 1, word: "there"}
+
+  - name: "a line with no letters is one wordless segment"
+    line: "..."
+    segments:
+      - {closing: "..."}
+
+  - name: "an empty line has no segments"
+    line: ""
+    segments: []
+
+  - name: "space before the first word is a wordless segment of its own"
+    line: "  go"
+    segments:
+      - {space: "  "}
+      - {index: 0, word: "go"}
+
+passage:
+  - name: "words carry their line and their order"
+    lines: ["From fairest creatures", "we desire increase,"]
+    words: ["From", "fairest", "creatures", "we", "desire", "increase"]
+    line_of_each: [0, 0, 0, 1, 1, 1]
+    index_in_line: [0, 1, 2, 0, 1, 2]

@@ -1,0 +1,91 @@
+# How measured word times are adjusted against a recording.
+#
+# `settle` cases run settledBetweenLines on the words of `lines`, timed by `marks`,
+# against `sample_count` silent samples made `level` loud over each `[from, to)` run
+# of `loud`, at `rate` samples a second. `want` pins a word's start or end, exactly
+# unless `within` is given; `joined` names a word whose end must be exactly the next
+# word's start. Every settled reading must still run forward without overlapping.
+#
+# `hold` cases run heldToTheNextWord on `spans`, and `ends` pins each word's end.
+settle:
+  - name: "a line ending marked inside a sound is carried to where the sound stops"
+    lines: ["one two", "three four"]
+    sample_count: 1000
+    level: 0.5
+    loud: [[0, 400], [500, 700]]
+    rate: 1000
+    marks: [[0, 0.15], [0.15, 0.30], [0.30, 0.60], [0.60, 0.70]]
+    want:
+      - {word: 1, end: 0.40, within: 0.011}
+    joined: [1]
+
+  - name: "a line ending marked in the quiet is left where it is"
+    lines: ["one two", "three four"]
+    sample_count: 1000
+    level: 0.5
+    loud: [[0, 400], [500, 700]]
+    rate: 1000
+    marks: [[0, 0.15], [0.15, 0.45], [0.45, 0.60], [0.60, 0.70]]
+    want:
+      - {word: 1, end: 0.45}
+      - {word: 2, start: 0.45}
+
+  - name: "a mark inside a line is left alone however loud the recording is there"
+    lines: ["one two", "three four"]
+    sample_count: 1000
+    level: 0.5
+    loud: [[0, 400], [500, 700]]
+    rate: 1000
+    marks: [[0, 0.35], [0.35, 0.60], [0.60, 0.65], [0.65, 0.70]]
+    want:
+      - {word: 0, end: 0.35}
+      - {word: 1, start: 0.35}
+
+  - name: "a line ending with no quiet to be found is left where it was measured"
+    lines: ["one two", "three four"]
+    sample_count: 1000
+    level: 0.5
+    loud: [[0, 900]]
+    rate: 1000
+    marks: [[0, 0.15], [0.15, 0.30], [0.30, 0.60], [0.60, 0.70]]
+    want:
+      - {word: 1, end: 0.30}
+      - {word: 2, start: 0.30}
+
+  - name: "a line ending with no room at all is left exactly where it was"
+    lines: ["one two", "three four"]
+    sample_count: 1000
+    level: 0.5
+    loud: [[0, 400], [500, 700]]
+    rate: 1000
+    marks: [[0, 0.15], [0.15, 0.306], [0.306, 0.308], [0.308, 0.70]]
+    want:
+      - {word: 1, end: 0.306}
+      - {word: 2, start: 0.306}
+
+  - name: "carrying a line ending never leaves the next word without room"
+    lines: ["one two", "three four"]
+    sample_count: 1000
+    level: 0.5
+    loud: [[0, 400], [500, 700]]
+    rate: 1000
+    marks: [[0, 0.15], [0.15, 0.30], [0.30, 0.33], [0.33, 0.70]]
+    want:
+      - {word: 1, end: 0.30}
+      - {word: 2, start: 0.30}
+
+hold:
+  - name: "a word is held open after it, but never into the word that follows"
+    spans: [[0, 0.5], [2, 2.5], [2.6, 2.8]]
+    duration: 10
+    limit: 0.4
+    ends:
+      - {word: 0, end: 0.9}
+      - {word: 1, end: 2.6}
+      - {word: 2, end: 3.2, within: 0.0001}
+
+  - name: "holding a word open never shortens it"
+    spans: [[0, 1.5], [1, 1.4]]
+    duration: 10
+    ends:
+      - {word: 0, end: 1.5}

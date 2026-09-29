@@ -1,0 +1,49 @@
+# Which heard words faithfully represent the written words they were paired with.
+#
+# `faithful` is the set of match indices accepted; `matches`, when given, is how many
+# pairs the aligner made. `quirks` maps a written word to heard spellings.
+tests:
+  - name: "a word said as written is faithful"
+    expected: ["love"]
+    heard: ["love"]
+    faithful: [0]
+
+  - name: "a similar word is paired but not faithful"
+    expected: ["love"]
+    heard: ["dove"]
+    matches: 1
+    faithful: []
+
+  - name: "an elision spelled out is faithful without a patch"
+    expected: ["tatter’d"]
+    heard: ["tattered"]
+    faithful: [0]
+
+  - name: "a patched word is paired by the patch and then accepted by it"
+    expected: ["heir"]
+    heard: ["air"]
+    quirks: {"heir": ["air"], "O": ["oh"]}
+    matches: 1
+    faithful: [0]
+
+  - name: "without the table the same pair is not even put together"
+    expected: ["heir"]
+    heard: ["air"]
+    faithful: []
+
+  - name: "a word nothing was heard for is neither paired nor faithful"
+    expected: ["love", "is"]
+    heard: ["love"]
+    matches: 1
+    faithful: [0]
+
+faithful:
+  - {name: "print elides a letter and the recogniser writes it back", heard: "tattered", written: "tatter’d", faithful: true}
+  - {name: "a restored vowel before a final consonant", heard: "crowned", written: "crown’d", faithful: true}
+  - {name: "a restored vowel inside an ending", heard: "bestowest", written: "bestow’st", faithful: true}
+  - {name: "a restored vowel after a vowel", heard: "beguiled", written: "beguil’d", faithful: true}
+  - {name: "a restored vowel at the end of the word", heard: "the", written: "th’", faithful: true}
+  - {name: "a consonant may not be written back", heard: "whatever", written: "whate’er", faithful: false}
+  - {name: "a vowel may not be written back away from the apostrophe", heard: "loves", written: "lov’st", faithful: false}
+  - {name: "an elision may not be left out", heard: "crown", written: "crown’d", faithful: false}
+  - {name: "a word without an apostrophe is only itself", heard: "time", written: "times", faithful: false}

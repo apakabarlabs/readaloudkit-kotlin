@@ -51,21 +51,21 @@ object VerseLayoutPlanner {
     ): VerseLayoutPlan {
         val widest = candidateWidths.maxOrNull() ?: return VerseLayoutPlan(columnWidth = 0.0, rowStarts = lines.map { listOf(0) })
 
-        var best: Candidate? = null
-        for (width in candidateWidths.sortedDescending()) {
-            var total = (widest - width) * NARROWING_PENALTY_PER_POINT
-            val rows = mutableListOf<List<Int>>()
-            for (words in lines) {
-                val line = breakLine(words = words, spaceWidth = spaceWidth, width = width, indent = indent)
-                total += line.cost
-                rows.add(line.starts)
+        val candidates =
+            candidateWidths.sortedDescending().map { width ->
+                var total = (widest - width) * NARROWING_PENALTY_PER_POINT
+                val rows = mutableListOf<List<Int>>()
+                for (words in lines) {
+                    val line = breakLine(words = words, spaceWidth = spaceWidth, width = width, indent = indent)
+                    total += line.cost
+                    rows.add(line.starts)
+                }
+                Candidate(width = width, cost = total, rows = rows)
             }
-            if (best == null || total < best.cost) {
-                best = Candidate(width = width, cost = total, rows = rows)
+        val chosen =
+            candidates.drop(1).fold(candidates[0]) { best, candidate ->
+                if (candidate.cost < best.cost) candidate else best
             }
-        }
-
-        val chosen = best ?: return VerseLayoutPlan(columnWidth = widest, rowStarts = lines.map { listOf(0) })
         return VerseLayoutPlan(columnWidth = chosen.width, rowStarts = chosen.rows)
     }
 

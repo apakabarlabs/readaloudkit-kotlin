@@ -1,26 +1,13 @@
 package fm.apakabar.readaloudkit
 
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.TestFactory
 import kotlin.test.assertEquals
 
 class StageStateTests {
-    @Test
-    fun aStageOfNoPiecesIsUntouchedRatherThanComplete() {
-        assertEquals(StageState.UNTOUCHED, StageState.read(emptyList()))
-    }
-
-    @Test
-    fun everyPieceClearedMakesTheStageComplete() {
-        assertEquals(StageState.COMPLETE, StageState.read(List(3) { PieceProgressState.CLEARED }))
-    }
-
-    @Test
-    fun oneTriedPieceMakesTheStageStarted() {
-        assertEquals(StageState.STARTED, StageState.read(listOf(PieceProgressState.TRIED, PieceProgressState.UNTOUCHED)))
-    }
-
-    @Test
-    fun untouchedPiecesLeaveTheStageUntouched() {
-        assertEquals(StageState.UNTOUCHED, StageState.read(List(3) { PieceProgressState.UNTOUCHED }))
-    }
+    @TestFactory
+    fun `reads the stage from its pieces`(): List<DynamicTest> =
+        Cases.tests(ProgressCases.all.stage, { it.name }) { case ->
+            assertEquals(stageState(case.stage), StageState.read(case.pieces.map(::pieceProgressState)))
+        }
 }

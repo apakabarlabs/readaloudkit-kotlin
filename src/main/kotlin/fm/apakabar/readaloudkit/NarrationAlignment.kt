@@ -13,14 +13,14 @@ import kotlinx.serialization.json.Json
  * The representation is shared by the tool that measures a recording and the client
  * that presents it.
  *
- * @property sonnet Application-defined numeric identifier of the aligned passage.
+ * @property piece Identifier of the aligned piece, as the work names it.
  * @property duration Duration of the recording in seconds.
  * @property words Supplied word intervals in passage order.
  * @property recording An application-defined identifier for the recording these timings describe.
  */
 @Serializable
 data class NarrationAlignment(
-    val sonnet: Int,
+    val piece: String,
     val duration: Double,
     val words: List<Word>,
     val recording: String? = null,

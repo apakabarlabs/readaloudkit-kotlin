@@ -1,9 +1,42 @@
 package fm.apakabar.readaloudkit
 
+import kotlinx.serialization.Serializable
+import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 import kotlin.math.abs
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+
+@Serializable
+data class LayoutCases(
+    val `break`: List<BreakCase>,
+    val run: List<RunCase>,
+) {
+    companion object {
+        val all: LayoutCases by lazy { Cases.load("layout_tests.yaml", serializer()) }
+    }
+}
+
+@Serializable
+data class BreakCase(
+    val name: String,
+    val words: List<Double>,
+    val space: Double,
+    val width: Double,
+    val indent: Double,
+    val starts: List<Int>,
+)
+
+@Serializable
+data class RunCase(
+    val name: String,
+    val words: List<Double>,
+    val from: Int,
+    val to: Int,
+    val space: Double,
+    val width: Double,
+)
 
 class VerseLayoutTests {
     private val space = 1.0
@@ -14,10 +47,22 @@ class VerseLayoutTests {
         width: Double,
     ): List<Int> = VerseLayoutPlanner.breakLine(words = words, spaceWidth = space, width = width, indent = indent).starts
 
-    @Test
-    fun `a line that fits is never broken`() {
-        assertEquals(listOf(0), breakLine(listOf(10.0, 10.0, 10.0), width = 100.0))
-    }
+    @TestFactory
+    fun `breaks where the case says`(): List<DynamicTest> =
+        Cases.tests(LayoutCases.all.`break`, { it.name }) { case ->
+            val starts =
+                VerseLayoutPlanner
+                    .breakLine(words = case.words, spaceWidth = case.space, width = case.width, indent = case.indent)
+                    .starts
+
+            assertEquals(case.starts, starts)
+        }
+
+    @TestFactory
+    fun `measures runs with spaces`(): List<DynamicTest> =
+        Cases.tests(LayoutCases.all.run, { it.name }) { case ->
+            assertEquals(case.width, VerseLayoutPlanner.run(case.words, from = case.from, to = case.to, spaceWidth = case.space))
+        }
 
     @Test
     fun `a line that does not fit is broken once`() {
@@ -34,13 +79,6 @@ class VerseLayoutTests {
 
         assertEquals(2, starts.size)
         assertTrue(starts[1] < words.size - 1)
-    }
-
-    @Test
-    fun `a stranded word is accepted only when nothing else is possible`() {
-        val starts = breakLine(listOf(40.0, 40.0), width = 50.0)
-
-        assertEquals(listOf(0, 1), starts)
     }
 
     @Test
@@ -95,10 +133,9 @@ class VerseLayoutTests {
 
     @Test
     fun `a slightly narrower column is taken when it saves a stranded word`() {
-        val lines = listOf(listOf(30.0, 30.0, 30.0, 5.0))
         val plan =
             VerseLayoutPlanner.plan(
-                lines = lines,
+                lines = listOf(listOf(30.0, 30.0, 30.0, 5.0)),
                 spaceWidth = space,
                 candidateWidths = listOf(66.0, 60.0),
                 indent = indent,
@@ -109,9 +146,15 @@ class VerseLayoutTests {
     }
 
     @Test
-    fun `widths are the planner's only input about the text`() {
-        assertEquals(34.0, VerseLayoutPlanner.run(listOf(10.0, 10.0, 10.0), from = 0, to = 3, spaceWidth = 2.0))
-        assertEquals(10.0, VerseLayoutPlanner.run(listOf(10.0, 10.0, 10.0), from = 1, to = 2, spaceWidth = 2.0))
-        assertEquals(0.0, VerseLayoutPlanner.run(listOf(10.0, 10.0, 10.0), from = 2, to = 2, spaceWidth = 2.0))
+    fun `no candidate widths lay every line out as one row at width zero`() {
+        val plan =
+            VerseLayoutPlanner.plan(
+                lines = listOf(listOf(10.0, 10.0), listOf(20.0)),
+                spaceWidth = space,
+                candidateWidths = emptyList(),
+                indent = indent,
+            )
+
+        assertEquals(VerseLayoutPlan(columnWidth = 0.0, rowStarts = listOf(listOf(0), listOf(0))), plan)
     }
 }

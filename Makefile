@@ -1,10 +1,12 @@
+SWIFT_DIR = ../readaloudkit-swift
+TEST_RESOURCES = src/test/resources
 COMMENTCENSOR_REF ?= 48d702a6ba4ace9af0bf996fad2fff9a012f25f9
 COMMENTCENSOR_ENV = build/commentcensor
 COMMENTCENSOR = $(COMMENTCENSOR_ENV)/bin/commentcensor
 
 .DEFAULT_GOAL := build
 
-.PHONY: build test test-build docs comments lint lint-fix format clean install install-tools publish publish-local publish-check
+.PHONY: build test test-build docs comments lint lint-fix format clean install install-tools sync-yaml publish publish-local publish-check
 
 install-tools:
 	python3 -m venv $(COMMENTCENSOR_ENV)
@@ -49,3 +51,7 @@ publish-local:
 
 publish-check:
 	./gradlew publishToMavenLocal
+
+sync-yaml:
+	mkdir -p $(TEST_RESOURCES)
+	cp $(SWIFT_DIR)/Tests/ReadAloudKitTests/Resources/*.yaml $(TEST_RESOURCES)/

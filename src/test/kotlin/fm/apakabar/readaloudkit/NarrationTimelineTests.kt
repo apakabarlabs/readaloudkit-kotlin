@@ -1,12 +1,85 @@
 package fm.apakabar.readaloudkit
 
 import fm.apakabar.readalign.SpeechWeighting
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 import kotlin.math.abs
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+
+@Serializable
+data class TimelineCases(
+    val settle: List<SettleCase>,
+    val hold: List<HoldCase>,
+) {
+    companion object {
+        val all: TimelineCases by lazy { Cases.load("timeline_tests.yaml", serializer()) }
+    }
+}
+
+@Serializable
+data class ExpectedEdge(
+    val word: Int,
+    val start: Double? = null,
+    val end: Double? = null,
+    val within: Double = 0.0,
+) {
+    fun check(
+        timing: WordTiming,
+        name: String,
+    ) {
+        assertTrue(start != null || end != null, "$name: word $word pins nothing")
+        start?.let { assertTrue(abs(timing.start - it) <= within, "$name: start of word $word is ${timing.start}") }
+        end?.let { assertTrue(abs(timing.end - it) <= within, "$name: end of word $word is ${timing.end}") }
+    }
+}
+
+@Serializable
+data class SettleCase(
+    val name: String,
+    val lines: List<String>,
+    @SerialName("sample_count") val sampleCount: Int,
+    val level: Float,
+    val loud: List<List<Int>>,
+    val rate: Double,
+    val marks: List<List<Double>>,
+    val want: List<ExpectedEdge>,
+    val joined: List<Int>? = null,
+) {
+    val samples: FloatArray
+        get() {
+            val samples = FloatArray(sampleCount)
+            for ((from, to) in loud) for (index in from until to) samples[index] = level
+            return samples
+        }
+
+    val timings: List<WordTiming>
+        get() =
+            WordTokenizer.latinScript.words(Passage(lines = lines)).zip(marks) { word, mark ->
+                WordTiming(word = word, start = mark[0], end = mark[1])
+            }
+}
+
+@Serializable
+data class HoldCase(
+    val name: String,
+    val spans: List<List<Double>>,
+    val duration: Double,
+    val limit: Double? = null,
+    val ends: List<ExpectedEdge>,
+) {
+    val timings: List<WordTiming>
+        get() {
+            val line = List(spans.size) { "word" }.joinToString(" ")
+            val words = WordTokenizer.latinScript.words(Passage(lines = listOf(line)))
+            return words.zip(spans) { word, span -> WordTiming(word = word, start = span[0], end = span[1]) }
+        }
+}
 
 class NarrationTimelineTests {
     private val passage =
@@ -23,128 +96,28 @@ class NarrationTimelineTests {
     private val timings: List<WordTiming>
         get() = NarrationTimeline.estimate(passage, duration = duration)
 
-    private object TwoLines {
-        val passage = Passage(lines = listOf("one two", "three four"))
-        const val RATE = 1_000.0
+    @TestFactory
+    fun `settles line endings`(): List<DynamicTest> =
+        Cases.tests(TimelineCases.all.settle, { it.name }) { case ->
+            val settled = NarrationTimeline.settledBetweenLines(case.timings, samples = case.samples, sampleRate = case.rate)
 
-        val samples: FloatArray
-            get() {
-                val result = FloatArray(1_000)
-                for (index in 0 until 400) result[index] = 0.5f
-                for (index in 500 until 700) result[index] = 0.5f
-                return result
+            for (edge in case.want) edge.check(settled[edge.word], case.name)
+            for (word in case.joined ?: emptyList()) assertEquals(settled[word].end, settled[word + 1].start)
+            for ((earlier, later) in settled.zipWithNext()) {
+                assertTrue(later.start >= earlier.end)
+                assertTrue(later.end > later.start)
             }
-
-        fun timings(marks: List<Pair<Double, Double>>): List<WordTiming> {
-            val words = WordTokenizer.latinScript.words(passage)
-            return words.zip(marks) { word, mark -> WordTiming(word = word, start = mark.first, end = mark.second) }
         }
 
-        fun settled(marks: List<Pair<Double, Double>>): List<WordTiming> =
-            NarrationTimeline.settledBetweenLines(timings(marks), samples = samples, sampleRate = RATE)
-    }
+    @TestFactory
+    fun `holds words open`(): List<DynamicTest> =
+        Cases.tests(TimelineCases.all.hold, { it.name }) { case ->
+            val held =
+                case.limit?.let { NarrationTimeline.heldToTheNextWord(case.timings, duration = case.duration, limit = it) }
+                    ?: NarrationTimeline.heldToTheNextWord(case.timings, duration = case.duration)
 
-    private fun assertRunsForward(timings: List<WordTiming>) {
-        for ((earlier, later) in timings.zipWithNext()) {
-            assertTrue(later.start >= earlier.end)
-            assertTrue(later.end > later.start)
+            for (edge in case.ends) edge.check(held[edge.word], case.name)
         }
-    }
-
-    @Test
-    fun `a line ending marked inside a sound is carried to where the sound stops`() {
-        val settled = TwoLines.settled(listOf(0.0 to 0.15, 0.15 to 0.30, 0.30 to 0.60, 0.60 to 0.70))
-
-        assertTrue(abs(settled[1].end - 0.40) < 0.011)
-        assertEquals(settled[1].end, settled[2].start)
-    }
-
-    @Test
-    fun `a line ending marked in the quiet is left where it is`() {
-        val settled = TwoLines.settled(listOf(0.0 to 0.15, 0.15 to 0.45, 0.45 to 0.60, 0.60 to 0.70))
-
-        assertEquals(0.45, settled[1].end)
-        assertEquals(0.45, settled[2].start)
-    }
-
-    @Test
-    fun `a mark inside a line is left alone however loud the recording is there`() {
-        val settled = TwoLines.settled(listOf(0.0 to 0.35, 0.35 to 0.60, 0.60 to 0.65, 0.65 to 0.70))
-
-        assertEquals(0.35, settled[0].end)
-        assertEquals(0.35, settled[1].start)
-    }
-
-    @Test
-    fun `a line ending with no quiet to be found is left where it was measured`() {
-        val samples = FloatArray(1_000)
-        for (index in 0 until 900) samples[index] = 0.5f
-        val settled =
-            NarrationTimeline.settledBetweenLines(
-                TwoLines.timings(listOf(0.0 to 0.15, 0.15 to 0.30, 0.30 to 0.60, 0.60 to 0.70)),
-                samples = samples,
-                sampleRate = TwoLines.RATE,
-            )
-
-        assertEquals(0.30, settled[1].end)
-        assertEquals(0.30, settled[2].start)
-    }
-
-    @Test
-    fun `a line ending with no room at all is left exactly where it was`() {
-        val settled = TwoLines.settled(listOf(0.0 to 0.15, 0.15 to 0.306, 0.306 to 0.308, 0.308 to 0.70))
-
-        assertEquals(0.306, settled[1].end)
-        assertEquals(0.306, settled[2].start)
-        assertRunsForward(settled)
-    }
-
-    @Test
-    fun `carrying a line ending never leaves the next word without room`() {
-        val settled = TwoLines.settled(listOf(0.0 to 0.15, 0.15 to 0.30, 0.30 to 0.33, 0.33 to 0.70))
-
-        assertEquals(0.30, settled[1].end)
-        assertEquals(0.30, settled[2].start)
-        assertTrue(settled[2].end > settled[2].start)
-    }
-
-    @Test
-    fun `the settled reading still runs forward and never overlaps itself`() {
-        val settled = TwoLines.settled(listOf(0.0 to 0.15, 0.15 to 0.30, 0.30 to 0.60, 0.60 to 0.70))
-
-        assertRunsForward(settled)
-    }
-
-    @Test
-    fun `a word is held open after it, but never into the word that follows`() {
-        val words = WordTokenizer.latinScript.words(passage)
-        val clipped =
-            listOf(
-                WordTiming(word = words[0], start = 0.0, end = 0.5),
-                WordTiming(word = words[1], start = 2.0, end = 2.5),
-                WordTiming(word = words[2], start = 2.6, end = 2.8),
-            )
-        val held = NarrationTimeline.heldToTheNextWord(clipped, duration = 10.0, limit = 0.4)
-
-        assertEquals(0.9, held[0].end)
-        assertEquals(2.6, held[1].end)
-        assertTrue(abs(held[2].end - 3.2) < 0.0001)
-        for ((earlier, later) in held.zipWithNext()) {
-            assertTrue(earlier.end <= later.start)
-        }
-    }
-
-    @Test
-    fun `holding a word open never shortens it`() {
-        val words = WordTokenizer.latinScript.words(passage)
-        val overlapping =
-            listOf(
-                WordTiming(word = words[0], start = 0.0, end = 1.5),
-                WordTiming(word = words[1], start = 1.0, end = 1.4),
-            )
-        val held = NarrationTimeline.heldToTheNextWord(overlapping, duration = 10.0)
-        assertEquals(1.5, held[0].end)
-    }
 
     @Test
     fun `every word gets a timing inside the recording`() {

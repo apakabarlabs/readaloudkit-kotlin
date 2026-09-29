@@ -43,6 +43,14 @@ A written word nothing was heard for is left out of `SpokenWords.check(...).matc
 altogether, so comparing how many matches were faithful with how many there were
 does not show that every word was said; `isComplete` does.
 
+## Cases
+
+What the library answers for a given input is written down once, in YAML under
+`Tests/ReadAloudKitTests/Resources/` in readaloudkit-swift, and copied into
+`src/test/resources/` here with `make sync-yaml`. A test fetches each listed file from
+that repository's `main` and fails when the copy differs, so the ports cannot quietly
+drift apart.
+
 ## Install
 
 The library is published to Maven Central:
@@ -53,7 +61,7 @@ repositories {
 }
 
 dependencies {
-    implementation("fm.apakabar:readaloudkit-kotlin:0.2.0")
+    implementation("fm.apakabar:readaloudkit-kotlin:0.3.0")
 }
 ```
 
@@ -70,6 +78,7 @@ make test
 make lint
 make docs
 make build
+make sync-yaml   # after the cases change in readaloudkit-swift
 ```
 
 Releases are published by the [Release workflow](https://github.com/apakabarlabs/readaloudkit-kotlin/actions/workflows/release.yml).
