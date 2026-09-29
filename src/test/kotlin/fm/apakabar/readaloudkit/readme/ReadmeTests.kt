@@ -7,7 +7,9 @@ import fm.apakabar.readaloudkit.WordTokenizer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -34,21 +36,42 @@ class ReadmeTests {
         return saidEveryWord
     }
 
+    private fun completedReading(): Boolean {
+        val work = Json.decodeFromString(Work.serializer(), SONNETS)
+        val tokenizer = WordTokenizer(interiorMarks = work.interiorMarks)
+        val elisions = Elisions(fullForms = work.elisions)
+        val tracker =
+            SpokenLineTracker(
+                lines = listOf("Will be a tatter’d weed", "of small worth held"),
+                elisions = elisions,
+                tokenizer = tokenizer,
+            )
+        val progress = tracker.progress(heard = "will be a tattered weed of small worth held")
+        val completed = progress.isComplete
+        return completed
+    }
+
     private val readme = File("README.md").readText()
 
-    @Test
-    fun `every Kotlin example in the README is code these tests run`() {
-        val examples = fencedBlocks(readme, language = "kotlin")
-        val run = trimmedLines(File(SOURCE).readText())
+    @TestFactory
+    fun `every Kotlin example in a document is code inside the function a test runs for it`(): List<DynamicTest> =
+        DOCUMENTS.map { (path, runBy) ->
+            DynamicTest.dynamicTest(path) {
+                val examples = fencedBlocks(File(path).readText(), language = "kotlin")
+                val source = File(SOURCE).readLines()
+                val body = checkNotNull(body(of = runBy, source)) { "$runBy is not a function of this file" }
+                val imports = source.filter { it.startsWith("import ") }
 
-        assertTrue(examples.isNotEmpty(), "the README shows no Kotlin")
-        for (paragraph in examples.flatMap(::paragraphs)) {
-            assertTrue(
-                run.windowed(paragraph.size).contains(paragraph),
-                "the README shows code no test runs:\n${paragraph.joinToString("\n")}",
-            )
+                assertTrue(examples.isNotEmpty(), "$path shows no Kotlin")
+                for (paragraph in examples.flatMap(::paragraphs)) {
+                    val runs = if (paragraph.all { it.startsWith("import ") }) imports else body
+                    assertTrue(
+                        runs.windowed(paragraph.size).contains(paragraph),
+                        "$path shows code $runBy does not run:\n${paragraph.joinToString("\n")}",
+                    )
+                }
+            }
         }
-    }
 
     @Test
     fun `the README installs the version the CHANGELOG releases`() {
@@ -69,7 +92,22 @@ class ReadmeTests {
         assertFalse(saidEveryWord(lines, "will be a tattered weed of worth held"))
     }
 
+    @Test
+    fun `the module docs' reading check completes a reading said whole`() {
+        assertTrue(completedReading())
+    }
+
     private fun trimmedLines(text: String): List<String> = text.lines().map { it.trim() }
+
+    private fun body(
+        of: String,
+        source: List<String>,
+    ): List<String>? {
+        val start = source.indexOfFirst { it.startsWith("    private fun $of(") }.takeIf { it >= 0 } ?: return null
+        val open = (start until source.size).firstOrNull { source[it].endsWith("{") } ?: return null
+        val close = (open until source.size).firstOrNull { source[it] == "    }" } ?: return null
+        return source.subList(open + 1, close).map { it.trim() }
+    }
 
     private fun fencedBlocks(
         markdown: String,
@@ -101,6 +139,7 @@ class ReadmeTests {
 
     companion object {
         private const val SOURCE = "src/test/kotlin/fm/apakabar/readaloudkit/readme/ReadmeTests.kt"
+        private val DOCUMENTS = listOf("README.md" to "saidEveryWord", "docs/module.md" to "completedReading")
         private val RELEASED = Regex("""^## (\d+\.\d+\.\d+)$""", RegexOption.MULTILINE)
         private val INSTALLED = Regex(""""fm\.apakabar:readaloudkit-kotlin:([^"]+)"""")
     }
