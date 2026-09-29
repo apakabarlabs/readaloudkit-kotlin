@@ -191,7 +191,10 @@ class NarrationAlignmentTests {
         val serializer = NarrationAlignment.Word.serializer()
 
         assertFailsWith<SerializationException> {
-            lenient.decodeFromString(serializer, """{"line": 0, "text": "a", "start": 0, "end": 0.1, "confidence": 1}""")
+            lenient.decodeFromString(serializer, """{"line": 0, "start": 0, "end": 0.1}""")
+        }
+        assertFailsWith<SerializationException> {
+            lenient.decodeFromString(serializer, """{"line": 0, "text": null, "start": 0, "end": 0.1}""")
         }
         assertFailsWith<SerializationException> {
             lenient.decodeFromString(serializer, """{"line": "0", "text": "a", "start": 0, "end": 0.1}""")

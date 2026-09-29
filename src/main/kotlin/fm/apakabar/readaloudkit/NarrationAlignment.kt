@@ -21,8 +21,9 @@ import java.text.Normalizer
  * Unlike an estimated timeline, an alignment preserves the producer's supplied start
  * and end for every listed word. Decoding refuses times that cannot describe one
  * recording read in order: a negative start, an end before its start, or a word that
- * starts before the word listed ahead of it. It also refuses a field neither the
- * alignment nor its words have, and a value of another type than the field's. Values
+ * starts before the word listed ahead of it. It also refuses a missing field and a
+ * value of another type than the field's, but reads past a field it does not know, so
+ * that a field the server adds later does not stop a build already installed. Values
  * created in code are not checked.
  *
  * The representation is shared by the tool that measures a recording and the client
@@ -43,8 +44,9 @@ data class NarrationAlignment(
     /**
      * One word and its supplied interval in the recording, not validated against its bounds.
      *
-     * Read from JSON under any `Json` configuration, it refuses a field the word does not
-     * have, a value of another type than the field's, and a line outside `Int`.
+     * Read from JSON under any `Json` configuration, it refuses a missing field, a value of
+     * another type than the field's and a line outside `Int`, and reads past a field it
+     * does not know.
      *
      * @property line Zero-based index of the printed line containing the word.
      * @property text Printed spelling used when the alignment was produced.
@@ -174,9 +176,9 @@ data class NarrationAlignment(
     )
 
     /**
-     * Writes an alignment as JSON, and reads one only from JSON, refusing a field the
-     * alignment or a word does not have, a value of another type than the field declares
-     * and times that are out of order or bounds.
+     * Writes an alignment as JSON, and reads one only from JSON, refusing a missing field,
+     * a value of another type than the field declares and times that are out of order or
+     * bounds, and reading past a field it does not know.
      */
     object Serializer : KSerializer<NarrationAlignment> {
         override val descriptor: SerialDescriptor = Written.serializer().descriptor
@@ -196,14 +198,10 @@ data class NarrationAlignment(
     }
 
     companion object {
-        private val ALIGNMENT_FIELDS = setOf("piece", "duration", "words", "recording")
-        private val WORD_FIELDS = setOf("line", "text", "start", "end")
-
         private fun composed(text: String): String = Normalizer.normalize(text, Normalizer.Form.NFC)
 
         internal fun read(element: JsonElement): NarrationAlignment {
             val fields = element as? JsonObject ?: throw SerializationException("an alignment is not an object")
-            refuseFields(fields, otherThan = ALIGNMENT_FIELDS, of = "an alignment")
             val listed = fields["words"] as? JsonArray ?: throw SerializationException("the alignment has no list of words")
             val words = listed.mapIndexed { index, word -> word(word, "word $index") }
             check(words)
@@ -220,7 +218,6 @@ data class NarrationAlignment(
             name: String,
         ): Word {
             val fields = element as? JsonObject ?: throw SerializationException("$name is not an object")
-            refuseFields(fields, otherThan = WORD_FIELDS, of = name)
             return Word(
                 line = integer(fields["line"], "line of $name"),
                 text = string(fields["text"], "text of $name") ?: throw SerializationException("$name has no text"),

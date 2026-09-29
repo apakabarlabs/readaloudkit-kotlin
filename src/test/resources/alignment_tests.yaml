@@ -2,9 +2,10 @@
 #
 # `decode` cases read the document the server publishes, `{"version": ...,
 # "alignment": {...}}`: from `served`, a file beside this one fetched from the server
-# by `make served`, or from `json`. A case that decodes pins the whole document in
-# `published`; `malformed` says the JSON has another shape or type than the
-# document's; `timing_error` names the first word whose times cannot stand, by its
+# by `make served`, or from `json`. A field the document does not know is read past,
+# since a build in a store cannot learn a field the server adds later. A case that
+# decodes pins the whole document in `published`; `malformed` says the JSON lacks a
+# field or has another shape or type than the document's; `timing_error` names the first word whose times cannot stand, by its
 # `kind`, its index in `word` and its printed `line`.
 #
 # `timings` cases marry `words` to the passage of `lines`, split by a tokenizer that
@@ -165,9 +166,14 @@ decode:
     json: '{"alignment": {"piece": "1", "duration": 1, "words": []}}'
     malformed: true
 
-  - name: "a field the published document does not have is refused, not skipped"
+  - name: "a field the server adds to the document later is read past"
     json: '{"version": "v1", "reading": "shakespeare", "alignment": {"piece": "1", "duration": 1, "words": []}}'
-    malformed: true
+    published:
+      version: "v1"
+      alignment:
+        piece: "1"
+        duration: 1
+        words: []
 
   - name: "a piece named by a number rather than a string is refused"
     json: '{"version": "v1", "alignment": {"piece": 18, "duration": 4.5, "words": []}}'
@@ -225,17 +231,37 @@ decode:
     json: '{"version": "v1", "alignment": {"piece": null, "duration": 1, "words": []}}'
     malformed: true
 
-  - name: "a field the alignment does not have is refused, not skipped"
+  - name: "a field the server adds to the alignment later is read past"
     json: '{"version": "v1", "alignment": {"piece": "18", "sonnet": 18, "duration": 4.5, "words": []}}'
-    malformed: true
+    published:
+      version: "v1"
+      alignment:
+        piece: "18"
+        duration: 4.5
+        words: []
 
-  - name: "a field a word does not have is refused, not skipped"
+  - name: "a field the server adds to a word later is read past"
     json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": 0, "end": 0.1, "confidence": 0.9}]}}'
-    malformed: true
+    published:
+      version: "v1"
+      alignment:
+        piece: "1"
+        duration: 1
+        words:
+          - {line: 0, text: "a", start: 0, end: 0.1}
 
-  - name: "a stray field is refused before the times are judged"
+  - name: "an added field of another type is read past, not judged"
+    json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "speaker": {"name": "A"}, "words": []}}'
+    published:
+      version: "v1"
+      alignment:
+        piece: "1"
+        duration: 1
+        words: []
+
+  - name: "an added field does not excuse times that cannot stand"
     json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "speaker": "A", "words": [{"line": 0, "text": "a", "start": -1, "end": 0.1}]}}'
-    malformed: true
+    timing_error: {kind: negative_start, word: 0, line: 0}
 
   - name: "a word that starts before the recording is refused"
     json: '{"version": "v1", "alignment": {"piece": "1", "duration": 1, "words": [{"line": 0, "text": "a", "start": -0.1, "end": 0.1}]}}'

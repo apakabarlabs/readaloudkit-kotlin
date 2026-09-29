@@ -68,6 +68,14 @@ What the library answers for a given input is written down once, in YAML under
 that repository's `main` and fails when the copy differs, so the ports cannot quietly
 drift apart.
 
+## Reading what the server publishes
+
+`PublishedAlignment.decode` and `RecognizerQuirks.decode` refuse a document that lacks a
+field or holds a value of another type, and read past a field they do not know. An app
+already installed cannot learn a field the server adds later, so such a field must not
+stop it. A key repeated within one object keeps one of its values; which one is not
+promised and may differ between ports.
+
 ## Install
 
 The library is published to Maven Central, and a test holds the version below to the

@@ -15,10 +15,13 @@
   reads the hearing table published for one recogniser build,
   `{"build": ..., "version": ..., "words": {written: [{"heard": ..., "after": ...}]}}`,
   refusing one published for another build with `RecognizerQuirks.WrongBuild`. Both
-  refuse a field the document does not have, a value of another type than the field
-  declares, a word's line outside `Int`, and word times that cannot describe one
-  recording read in order, naming the word and its line. `NarrationAlignment.Word` is
-  read as strictly under any `Json` configuration. `NarrationAlignment.timings`
+  refuse a missing field, a value of another type than the field declares, a word's
+  line outside `Int`, and word times that cannot describe one recording read in order,
+  naming the word and its line. Both read past a field they do not know, so that a
+  field the server adds later does not stop a build already installed. A key repeated
+  within one object keeps one of its values; which one is not promised and may differ
+  from the Swift library. `NarrationAlignment.Word` is read the same way under any
+  `Json` configuration. `NarrationAlignment.timings`
   compares the alignment's words with the passage's by canonical equivalence, so a
   letter written with a combining mark matches its precomposed spelling.
 - Nothing picks a language for the caller: the tracker, `wordsPerLine`,

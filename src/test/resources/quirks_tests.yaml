@@ -5,8 +5,9 @@
 # file beside this one fetched by `make served`, or from `table`, asking for `build`.
 # Or it gives `allowances` directly: written word to heard spellings, each a string or a
 # `{heard, after}` pair. A table published for another build is refused with
-# `wrong_build`, the build asked for and the one published; a table of another shape is
-# refused as `malformed`. Otherwise `empty` says whether any substitution is allowed,
+# `wrong_build`, the build asked for and the one published; a table that lacks a field
+# or has another shape or type is refused as `malformed`, while a field it does not know
+# is read past, since a build in a store cannot learn a field the server adds later. Otherwise `empty` says whether any substitution is allowed,
 # and each query asks whether `heard` is allowed for `written`, after `after` if given.
 tests:
   - name: "a build's hearing table is read as it is served"
@@ -48,10 +49,12 @@ tests:
     build: "parakeet"
     malformed: true
 
-  - name: "a field the table does not have is refused, not skipped"
-    table: '{"build": "parakeet", "version": "v1", "model": "parakeet", "words": {}}'
+  - name: "a field the server adds to the table later is read past"
+    table: '{"build": "parakeet", "version": "v1", "model": "parakeet", "words": {"in": [{"heard": "and", "after": "each"}]}}'
     build: "parakeet"
-    malformed: true
+    empty: false
+    queries:
+      - {heard: "and", written: "in", after: "each", allowed: true}
 
   - name: "words that are not a table of written words are refused"
     table: '{"build": "parakeet", "version": "v1", "words": ["tattered"]}'
@@ -78,10 +81,12 @@ tests:
     build: "parakeet"
     malformed: true
 
-  - name: "an allowance with a field it does not have is refused, not skipped"
+  - name: "a field the server adds to an allowance later is read past"
     table: '{"build": "parakeet", "version": "v1", "words": {"in": [{"heard": "and", "before": "each"}]}}'
     build: "parakeet"
-    malformed: true
+    empty: false
+    queries:
+      - {heard: "and", written: "in", allowed: true}
 
   - name: "a table that is not an object is refused"
     table: '["parakeet"]'

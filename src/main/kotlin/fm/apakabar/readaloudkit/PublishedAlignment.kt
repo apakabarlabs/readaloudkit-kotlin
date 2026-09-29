@@ -16,11 +16,13 @@ data class PublishedAlignment(
     val alignment: NarrationAlignment,
 ) {
     companion object {
-        private val FIELDS = setOf("version", "alignment")
-
         /**
-         * Decodes `{"version": ..., "alignment": {...}}`, the document the server serves,
-         * refusing a field it does not have.
+         * Decodes `{"version": ..., "alignment": {...}}`, the document the server serves.
+         *
+         * A missing field or a value of another type is refused. A field the document does
+         * not know is read past, at any depth, so that a field the server adds later does
+         * not stop a build already installed. A key repeated within one object keeps one of
+         * its values; which one is not promised and may differ between ports.
          *
          * @throws NarrationAlignment.TimingError naming the first word whose times cannot stand.
          * @throws SerializationException when [data] is not such a document.
@@ -29,7 +31,6 @@ data class PublishedAlignment(
             val fields =
                 Json.parseToJsonElement(utf8(data)) as? JsonObject
                     ?: throw SerializationException("a published alignment is not an object")
-            refuseFields(fields, otherThan = FIELDS, of = "a published alignment")
             val version =
                 NarrationAlignment.string(fields["version"], "version")
                     ?: throw SerializationException("the published alignment has no version")
