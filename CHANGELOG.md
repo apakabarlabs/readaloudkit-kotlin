@@ -51,3 +51,6 @@
   `src/test/resources/` by `make sync-yaml`, and a test compares each copy with the
   file on that repository's `main`. Every case that splits text names the
   `interior_marks` of its language, and a case without them cannot be read.
+- `ReadmeTests` fails unless every Kotlin block of the README is, paragraph by
+  paragraph and line for line, code the test runs, and unless the README installs the
+  version the CHANGELOG releases.

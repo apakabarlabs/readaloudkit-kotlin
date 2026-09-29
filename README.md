@@ -36,7 +36,7 @@ import fm.apakabar.readaloudkit.RecognizerQuirks
 import fm.apakabar.readaloudkit.SpokenLineTracker
 import fm.apakabar.readaloudkit.WordTokenizer
 
-val tracker = SpokenLineTracker(lines = printedLines, quirks = RecognizerQuirks.none, tokenizer = WordTokenizer.latinScript)
+val tracker = SpokenLineTracker(lines = lines, quirks = RecognizerQuirks.none, tokenizer = WordTokenizer.latinScript)
 val saidEveryWord = tracker.progress(heard = transcript).isComplete
 ```
 
@@ -48,6 +48,9 @@ A written word nothing was heard for is left out of `SpokenWords.check(...).matc
 altogether, so comparing how many matches were faithful with how many there were
 does not show that every word was said; `isComplete` does.
 
+Every Kotlin example in this README is code the tests run, and a test fails when one is
+not.
+
 ## Cases
 
 What the library answers for a given input is written down once, in YAML under
@@ -58,9 +61,10 @@ drift apart.
 
 ## Install
 
-The library is published to Maven Central:
+The library is published to Maven Central, and a test holds the version below to the
+latest one in the CHANGELOG:
 
-```kotlin
+```kts
 repositories {
     mavenCentral()
 }
