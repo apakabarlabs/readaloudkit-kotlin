@@ -27,7 +27,7 @@ object Cases {
 
     fun bytes(name: String): ByteArray =
         checkNotNull(Cases::class.java.getResourceAsStream("/$name")) {
-            "$name is missing: run `make sync-yaml`"
+            "$name is missing: run `make sync-yaml` in readaloudkit-swift"
         }.use { it.readBytes() }
 
     private val UTF8_BYTE_ORDER_MARK = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())

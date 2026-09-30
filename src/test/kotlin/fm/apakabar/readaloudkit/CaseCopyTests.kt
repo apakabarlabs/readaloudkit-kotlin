@@ -37,7 +37,7 @@ class CaseCopyTests {
                 assertContentEquals(
                     fetch("$LEAD_FILES/$name"),
                     Cases.bytes(name),
-                    "$name differs from the leading port: run `make sync-yaml`",
+                    "$name differs from the leading port: run `make sync-yaml` in readaloudkit-swift",
                 )
             }
         }
@@ -50,7 +50,7 @@ class CaseCopyTests {
                 .map { entry -> ((entry as JsonObject)["name"] as JsonPrimitive).content }
                 .filter(::isShared)
 
-        assertEquals(lead.sorted(), Cases.shared.sorted(), "the leading port's cases differ from the list: run `make sync-yaml`")
+        assertEquals(lead.sorted(), Cases.shared.sorted(), "the leading port's cases differ from the list: run `make sync-yaml` in readaloudkit-swift")
     }
 
     @Test
