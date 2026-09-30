@@ -50,7 +50,11 @@ class CaseCopyTests {
                 .map { entry -> ((entry as JsonObject)["name"] as JsonPrimitive).content }
                 .filter(::isShared)
 
-        assertEquals(lead.sorted(), Cases.shared.sorted(), "the leading port's cases differ from the list: run `make sync-yaml` in readaloudkit-swift")
+        assertEquals(
+            lead.sorted(),
+            Cases.shared.sorted(),
+            "the leading port's cases differ from the list: run `make sync-yaml` in readaloudkit-swift",
+        )
     }
 
     @Test
