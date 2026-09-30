@@ -64,7 +64,7 @@ not.
 
 What the library answers for a given input is written down once, in YAML under
 `Tests/ReadAloudKitTests/Resources/` in readaloudkit-swift, and copied into
-`src/test/resources/` here with `make sync-yaml`. A test fetches each listed file from
+`src/test/resources/` here with `make sync-yaml` in readaloudkit-swift. A test fetches each listed file from
 that repository's `main` and fails when the copy differs, so the ports cannot quietly
 drift apart.
 
@@ -116,7 +116,7 @@ make test
 make lint
 make docs
 make build
-make sync-yaml   # after the cases change in readaloudkit-swift
+make -C ../readaloudkit-swift sync-yaml   # after the cases change there
 ```
 
 Releases are published by the [Release workflow](https://github.com/apakabarlabs/readaloudkit-kotlin/actions/workflows/release.yml).
