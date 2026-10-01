@@ -10,11 +10,25 @@ import kotlin.test.assertEquals
 @Serializable
 data class TrackerCases(
     val tests: List<TrackerCase>,
+    val corrections: List<CorrectionCase>,
 ) {
     companion object {
-        val all: List<TrackerCase> by lazy { Cases.load("tracker_tests.yaml", serializer()).tests }
+        private val file: TrackerCases by lazy { Cases.load("tracker_tests.yaml", serializer()) }
+        val all: List<TrackerCase> get() = file.tests
+        val corrections: List<CorrectionCase> get() = file.corrections
     }
 }
+
+@Serializable
+data class CorrectionCase(
+    val name: String,
+    val lines: List<String>,
+    val quirks: Map<String, List<YamlNode>>? = null,
+    @SerialName("interior_marks") val interiorMarks: String,
+    val elisions: Map<String, List<String>>? = null,
+    val heard: String,
+    val corrected: String,
+)
 
 @Serializable
 data class ExpectedAttempt(
@@ -63,5 +77,19 @@ class SpokenLineTrackerTests {
             case.attempts?.let { attempts ->
                 assertEquals(attempts.map { WordAttempt(word = it.word, check = it.check) }, tracker.attempts(progress))
             }
+        }
+
+    @TestFactory
+    fun `answers with the table applied`(): List<DynamicTest> =
+        Cases.tests(TrackerCases.corrections, { it.name }) { case ->
+            val tracker =
+                SpokenLineTracker(
+                    lines = case.lines,
+                    quirks = Cases.quirks(case.quirks),
+                    elisions = Cases.elisions(case.elisions),
+                    tokenizer = Cases.tokenizer(case.interiorMarks),
+                )
+
+            assertEquals(case.corrected, tracker.corrected(case.heard))
         }
 }

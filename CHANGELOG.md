@@ -4,6 +4,20 @@ ReadAloudKit for Kotlin checks a reading aloud of a printed text against that te
 which written words were said, where in the text the reader is, and when each word
 sounds in a recorded narration.
 
+## 0.4.0
+
+### Added
+
+- `SpokenLineTracker.corrected(transcript)`: a transcript with the tracker's hearing
+  table applied, the answer a recogniser gives once it carries its own table. Every
+  span the table lets stand for printed words comes back in the printed spelling; the
+  rest, case and punctuation included, stays as heard. A full form the work lists for
+  an elided spelling is left as heard, since saying it already counts as saying the
+  printed word. Call it with the table of the build that heard the transcript, then
+  check the result with `RecognizerQuirks.none`, as you would a transcript from a
+  server that applies its own table. The same as readaloudkit-swift 0.4.0, checked
+  against the same shared cases.
+
 ## 0.3.1
 
 ### Changed

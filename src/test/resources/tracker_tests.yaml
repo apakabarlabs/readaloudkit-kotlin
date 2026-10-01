@@ -350,3 +350,62 @@ tests:
     checks: [correct, correct, correct, correct, correct, correct]
     complete: true
     all_wrong: false
+
+# What a recogniser answers once its hearing table is applied to its own transcript, as
+# against the same printed `lines`: each case gives `interior_marks`, optionally
+# `quirks` and `elisions` as above, the `heard` transcript and the `corrected` one.
+corrections:
+  - name: "a patched spelling comes back printed, the rest as heard"
+    lines: ["Alack! what poverty my Muse brings forth,"]
+    interior_marks: "'’-"
+    quirks: {"alack": ["alac"]}
+    heard: "Alac! what poverty my muse brings forth."
+    corrected: "Alack! what poverty my muse brings forth."
+
+  - name: "a patch tied to a neighbour restores only after that neighbour"
+    lines: ["among a crowd"]
+    interior_marks: "'’-"
+    quirks: {"a": [{heard: "the", after: "among"}]}
+    heard: "among the crowd"
+    corrected: "among a crowd"
+
+  - name: "a patch tied to a neighbour leaves the word alone elsewhere"
+    lines: ["in a crowd"]
+    interior_marks: "'’-"
+    quirks: {"a": [{heard: "the", after: "among"}]}
+    heard: "in the crowd"
+    corrected: "in the crowd"
+
+  - name: "a listed full form is left for the reader's check"
+    lines: ["his tatter’d weed"]
+    interior_marks: "'’-"
+    elisions: {"tatter’d": ["tattered"]}
+    heard: "his tattered weed"
+    corrected: "his tattered weed"
+
+  - name: "without a table the transcript is answered untouched"
+    lines: ["Alack! what poverty"]
+    interior_marks: "'’-"
+    heard: "Alac, what poverty"
+    corrected: "Alac, what poverty"
+
+  - name: "a word the table does not patch keeps its spelling however close"
+    lines: ["Alack! what poverty"]
+    interior_marks: "'’-"
+    quirks: {"alack": ["alac"]}
+    heard: "alac what povery"
+    corrected: "Alack what povery"
+
+  - name: "a patch for two printed words heard as one brings both back"
+    lines: ["bring in sense"]
+    interior_marks: "'’-"
+    quirks: {"in sense": ["incense"]}
+    heard: "bring incense"
+    corrected: "bring in sense"
+
+  - name: "nothing heard is nothing answered"
+    lines: ["Alack! what poverty"]
+    interior_marks: "'’-"
+    quirks: {"alack": ["alac"]}
+    heard: ""
+    corrected: ""

@@ -145,6 +145,33 @@ class SpokenLineTracker(
         return Progress(checks)
     }
 
+    /**
+     * The transcript as its recogniser answers once its hearing table is applied.
+     *
+     * Every span that [quirks] lets stand for printed words is put back in the printed
+     * spelling; everything else, case and punctuation included, stays as heard. A full
+     * form [elisions] gives for an elided spelling is left as heard, because a reader who
+     * says it has said the printed word. A recogniser and its table answer as one, so
+     * whatever checks the result needs no table of the build that heard it.
+     */
+    fun corrected(transcript: String): String {
+        val spans = tokenizer.wordRanges(transcript)
+        val heard = spans.map { transcript.substring(it) }
+        val checked = SpokenWords.check(expected = expected, heard = heard, quirks = quirks, elisions = elisions)
+        val restored = StringBuilder()
+        var kept = 0
+        for (index in checked.faithful.sorted()) {
+            val match = checked.matches[index]
+            if (match.heard.isEmpty()) continue
+            val said = match.heard.joinToString(" ") { heard[it] }
+            val printed = match.expected.joinToString(" ") { expected[it] }
+            if (isFaithful(said, to = printed, elisions = elisions)) continue
+            restored.append(transcript, kept, spans[match.heard.first].first).append(printed)
+            kept = spans[match.heard.last].last + 1
+        }
+        return restored.append(transcript, kept, transcript.length).toString()
+    }
+
     /** Pairs the original printed spellings with their check results. */
     fun attempts(progress: Progress): List<WordAttempt> =
         expected.zip(progress.checks) { word, check -> WordAttempt(word = word, check = check) }
