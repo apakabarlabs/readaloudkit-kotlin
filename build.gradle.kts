@@ -21,7 +21,7 @@ version =
 
 dependencies {
     api("fm.apakabar:readalign-kotlin:0.17.2")
-    api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+    api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0")
 
     testImplementation("io.heapy.kotaml:kotaml:0.111.0")
     testImplementation(kotlin("test"))
