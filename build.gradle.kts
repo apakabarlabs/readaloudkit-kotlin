@@ -20,7 +20,7 @@ version =
     ) { "CHANGELOG.md has no released version heading" }.groupValues[1]
 
 dependencies {
-    api("fm.apakabar:readalign-kotlin:0.20.0")
+    api("fm.apakabar:readalign-kotlin:0.22.0")
     api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.13.0")
 
     testImplementation("io.heapy.kotaml:kotaml:0.113.0")
